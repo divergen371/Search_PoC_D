@@ -800,7 +800,7 @@ void language_table()
                 "  :complex CONDS, :comp CONDS  複合検索（複数条件の組み合わせ）");
             writeln("    例: :complex pre:a suf:z len:3-5");
             writeln(
-                "    例: :complex sim:apple,1 len:5-7  (「apple」との距離が1以下で5-7文字の単語)");
+                "    例: :complex sim:apple,1 len:5-7  (「apple」との距離が1以下で5-7文字)");
             writeln("  :sim WORD [d]                類似検索 (デフォルト距離d=2)");
             writeln(
                 "  :sim+ WORD [d]               拡張類似検索 - より多くの結果を表示");
@@ -1507,51 +1507,6 @@ void language_table()
                                 .length);
                     }
                     // 後方一致条件
-            else if (condType == "suf")
-                    {
-                        bool[size_t] matchedIDs;
-                        string revCondValue = revStr(condValue);
-
-                        // RedBlackTreeを使って効率的に検索
-                        foreach (rev; suffixTree)
-                        {
-                            if (rev.startsWith(revCondValue))
-                            {
-                                auto w = revStr(rev);
-                                auto ent = wordDict[w];
-                                if (!ent.isDeleted)
-                                {
-                                    matchedIDs[ent.id] = true;
-                                }
-                            }
-                            else if (rev > revCondValue && !rev.startsWith(revCondValue))
-                            {
-                                // キーより大きいけど前方一致しない場合は終了
-                                break;
-                            }
-                        }
-
-                        if (isFirstCondition)
-                        {
-                            candidateIDs = matchedIDs;
-                            isFirstCondition = false;
-                        }
-                        else
-                        {
-                            // ANDで絞り込む
-                            foreach (id; candidateIDs.keys.dup)
-                            {
-                                if (id !in matchedIDs)
-                                {
-                                    candidateIDs.remove(id);
-                                }
-                            }
-                        }
-
-                        writefln("条件 suf:%s で %d件にフィルタリングしました", condValue, candidateIDs
-                                .length);
-                    }
-                    // 部分一致条件
             else if (condType == "sub")
                     {
                         bool[size_t] matchedIDs;
@@ -2238,7 +2193,7 @@ void updateCSVFile(string filePath, WordEntry[string] wordDict, WordEntry[size_t
     // ヘッダーを書き込む
     tempFile.writeln("ID,単語,削除フラグ");
 
-    // 辞書の内容を書き込む - バッファリングを活用するためにバッチ処理
+    // 辞書の内容を書き込む - バッチ処理
     size_t[] sortedIDs = idDict.keys;
     sort(sortedIDs);
 
@@ -3100,7 +3055,9 @@ public:
             auto node = item.node;
 
             // 現在ノードとクエリとの距離を計算
-            size_t dist = distanceFn(query, node.word, maxDist + 1);
+            // 実際の距離を取得するために十分な上限を設定する。
+            size_t limit = (query.length >= node.word.length ? query.length : node.word.length) + 1;
+            size_t dist  = distanceFn(query, node.word, limit);
 
             // 完全一致の場合は最優先で追加
             if (dist == 0 && !selfAdded)
