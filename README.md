@@ -1,6 +1,6 @@
 # Search PoC D
 
-高速な単語検索エンジンのD言語実装（実験）
+高速な単語検索エンジンの D 言語実装（実験）
 
 ## 概要
 
@@ -8,7 +8,7 @@
 
 主な特徴：
 
-- 10万件以上の単語に対する高速検索機能
+- 10 万件以上の単語に対する高速検索機能
 - 前方一致/後方一致/部分一致検索
 - 編集距離に基づく類似単語検索
 - インデックスによる検索の高速化
@@ -18,35 +18,35 @@
 
 ### 検索モード
 
-| コマンド | 説明 | 例 |
-|---------|------|-----|
-| `:pre` / `:prefix` | 前方一致検索 | `:pre app` |
-| `:suf` / `:suffix` | 後方一致検索 | `:suf ing` |
-| `:sub` / `:substr` | 部分一致検索 | `:sub cat` |
-| `:exact` / `:eq` | 完全一致検索 | `:exact apple` |
-| `:sim` / `:similar` | 類似検索 | `:sim apple 2` |
-| `:sim+` | 拡張類似検索（より多くの結果） | `:sim+ apple 2` |
-| `:complex` / `:comp` | 複合検索 | `:complex pre:a suf:z len:3-5` |
+| コマンド             | 説明                           | 例                             |
+| -------------------- | ------------------------------ | ------------------------------ |
+| `:pre` / `:prefix`   | 前方一致検索                   | `:pre app`                     |
+| `:suf` / `:suffix`   | 後方一致検索                   | `:suf ing`                     |
+| `:sub` / `:substr`   | 部分一致検索                   | `:sub cat`                     |
+| `:exact` / `:eq`     | 完全一致検索                   | `:exact apple`                 |
+| `:sim` / `:similar`  | 類似検索                       | `:sim apple 2`                 |
+| `:sim+`              | 拡張類似検索（より多くの結果） | `:sim+ apple 2`                |
+| `:complex` / `:comp` | 複合検索                       | `:complex pre:a suf:z len:3-5` |
 
 ### その他のコマンド
 
-| コマンド | 説明 |
-|---------|------|
-| `:h` / `:help` | ヘルプを表示 |
-| `:exit` / `:quit` | プログラムを終了 |
-| `:delete ID` / `:d ID` | 指定IDの単語を削除 |
-| `:undelete ID` / `:u ID` | 削除した単語を復元 |
-| `:list` / `:l` | 登録単語一覧を表示 |
-| `:list-all` / `:la` | 削除済みを含む全単語を表示 |
-| `:alpha` / `:a` | 単語をアルファベット順に表示 |
-| `:rebuild` / `:reindex` | インデックスを再構築 |
+| コマンド                 | 説明                         |
+| ------------------------ | ---------------------------- |
+| `:h` / `:help`           | ヘルプを表示                 |
+| `:exit` / `:quit`        | プログラムを終了             |
+| `:delete ID` / `:d ID`   | 指定 ID の単語を削除         |
+| `:undelete ID` / `:u ID` | 削除した単語を復元           |
+| `:list` / `:l`           | 登録単語一覧を表示           |
+| `:list-all` / `:la`      | 削除済みを含む全単語を表示   |
+| `:alpha` / `:a`          | 単語をアルファベット順に表示 |
+| `:rebuild` / `:reindex`  | インデックスを再構築         |
 
 ## インストール
 
 ### 必要条件
 
-- D言語コンパイラ（DMD, LDC, GDCのいずれか）
-- DUB（Dパッケージマネージャ）
+- D 言語コンパイラ（DMD, LDC, GDC のいずれか）
+- DUB（D パッケージマネージャ）
 
 ### ビルド方法
 
@@ -62,9 +62,9 @@ dub build --force --compiler=dmd -a=x86_64 -b=release -c=application --build-mod
 DFLAGS="-O -inline -release -boundscheck=off -mcpu=native" dub build --force --compiler=dmd -a=x86_64 -b=release -c=application --build-mode=allAtOnce
 ```
 
-### VSCodeでのビルド
+### VSCode でのビルド
 
-このプロジェクトには、VSCode用のタスク構成が含まれています。VSCodeでタスクパレット（Ctrl+Shift+P）を開き、「Tasks: Run Task」を選択して以下のタスクを実行できます：
+このプロジェクトには、VSCode 用のタスク構成が含まれています。VSCode でタスクパレット（Ctrl+Shift+P）を開き、「Tasks: Run Task」を選択して以下のタスクを実行できます：
 
 - `dub: Build` - 標準最適化ビルド
 - `dub: Optimized Build` - 超最適化ビルド
@@ -102,36 +102,39 @@ DFLAGS="-O -inline -release -boundscheck=off -mcpu=native" dub build --force --c
 
 ## 技術的詳細
 
-### BK-Tree検索
+### BK-Tree 検索
 
-BK-Tree（Burkhard-Keller Tree）は、メトリック空間内での近似検索を効率化するデータ構造です。このプロジェクトでは、Damerau-Levenshtein距離を用いて、単語間の編集距離を計算しています。
+BK-Tree（Burkhard-Keller Tree）は、メトリック空間内での近似検索を効率化するデータ構造です。このプロジェクトでは、Damerau-Levenshtein 距離を用いて、単語間の編集距離を計算しています。
 
 特徴：
 
-- 平均的にO(log n)に近い検索時間
+- 平均的に O(log n)に近い検索時間
 - 三角不等式を利用した枝刈りによる効率化
 - インデックス構築時間を短縮するメモリ最適化
 
 ### インデックス構造
 
 - 前方一致: RedBlackTree（平衡二分木）
-- 後方一致: 逆順文字列のRedBlackTree
-- 部分一致: n-gramインデックス＋BitArray
-- 長さ検索: 長さごとのIDマップ
+- 後方一致: 逆順文字列の RedBlackTree
+- 部分一致: n-gram インデックス＋ BitArray
+- 長さ検索: 長さごとの ID マップ
 
 ### データファイル
 
-このプログラムは、単語データを永続化するためにCSVファイルを使用します：
+このプログラムは、単語データを永続化するために CSV ファイルを使用します：
 
 #### language_data.csv
+
 ```
 
    ./search-poc-d --generate-data <件数>
 ```
+
 上記コマンドを実行することでカレントディレクトリに作成される主要なデータファイル。プログラム終了後もデータが保持されます。
 
 - **構造**: ID,単語,削除フラグ
 - **例**:
+
   ```
   ID,単語,削除フラグ
   0,apple,0
@@ -148,10 +151,10 @@ BK-Tree（Burkhard-Keller Tree）は、メトリック空間内での近似検�
 初回読み込み速度を向上させるためのキャッシュファイルも自動的に生成されます：
 
 - **language_data.csv.cache**: インデックスのバイナリキャッシュ
-- CSVファイルよりも新しい場合のみ使用されます
+- CSV ファイルよりも新しい場合のみ使用されます
 - 手動で削除しても問題ありません（再生成されます）
 
-注意：大規模な辞書（10万語以上）を使用する場合、CSVファイルとキャッシュファイルが大きくなることがあります。定期的なバックアップをお勧めします。
+注意：大規模な辞書（10 万語以上）を使用する場合、CSV ファイルとキャッシュファイルが大きくなることがあります。定期的なバックアップをお勧めします。
 
 ## ライセンス
 
@@ -161,6 +164,7 @@ MIT
 
 - テストを書く
 - マルチスレッド検索の実装
-- GUIインターフェースの追加
+- GUI インターフェースの追加
 - 外部辞書からのインポート機能
 - 検索結果のエクスポート機能
+- exitCallBackの例外キャッチを書く
