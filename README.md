@@ -172,7 +172,7 @@ MIT
 - BK-Treeの代わりにHNSW（Hierarchical Navigable Small World）かVP-Tree（Vantage-Point Tree）かAnnoy（Approximate Nearest Neighbors Oh Yeah）を検討する
   - language_data.csvの登録された疑似単語の件数が20万件を超えたあたりからBK-Treeの対称性が崩れる
     - 例えば登録された単語に「apple」と「appl」がある場合に類似度検索を行った場合`d(apple, appl) = d(appl, apple) = 1`を期待しているが登録件数が20万件を超えると「appl」で検索したときに「apple」がどの距離でも検出されなくなる
-    - `d(apple, appple) = 0`は成立しているが、`d(appl, appl) = 0`は成立しない
+    - `d(apple, apple) = 0`は成立しているが、`d(appl, appl) = 0`は成立しない
       - どころか類似度検索で「appl」をクエリにすると「apple」と「appl」どちらもいづれの距離で不検出
   - 考えられるのはメモリのスワッピングで距離計算の一部が近似計算に変わっている可能性
     - 計算時間制限による早期打ち切りか検索方向によって探索順序が異なることに起因する片方向のタイムアウト
