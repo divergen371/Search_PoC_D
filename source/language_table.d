@@ -2990,53 +2990,39 @@ public:
             Node* current = root;
 
             // 無限ループ防止（最大深度）
-            size_t maxIterations = 100;
-            size_t iterations = 0;
+            // size_t maxIterations = 100;
+            // size_t iterations = 0;
 
-            while (current !is null && iterations < maxIterations)
+            // while (current !is null && iterations < maxIterations)
+            while (current !is null)
             {
-                iterations++;
+                // iterations++;
 
                 // 現在ノードとの距離を計算
-                size_t dist = 0;
-                try
-                {
-                    dist = distanceFn(word, current.word, maxDistance + 1);
-                }
-                catch (Exception e)
-                {
-                    debug (verbose)
-                        writefln("距離計算中に例外: %s", e.msg);
-                    return;
-                }
+                size_t lim  = max(word.length, current.word.length) + 1;
+                size_t dist = distanceFn(word, current.word, lim);
 
-                // 距離が0なら同じ単語なので上書き（IDのみ）
-                if (dist == 0)
-                {
-                    current.id = id;
-                    return;
-                }
+                if (dist == 0) { current.id = id; return; }
 
-                // 計算された距離の子ノードを探す
                 auto childPtr = dist in current.children;
-
                 if (childPtr is null)
                 {
-                    // 該当する距離の子ノードが存在しなければ新規作成
                     current.children[dist] = new Node(word, id);
                     nodeCount++;
                     return;
                 }
-
-                // 子ノードに移動して検索継続
                 current = *childPtr;
             }
 
             // 最大深度到達
-            if (iterations >= maxIterations)
+            // if (iterations >= maxIterations)
+            // {
+            //     debug (verbose)
+            //         writeln("警告: BK-Tree挿入で最大深度に達しました");
+            // }
+            if (current is null)
             {
-                debug (verbose)
-                    writeln("警告: BK-Tree挿入で最大深度に達しました");
+                writeln("警告: BK-Tree挿入で最大深度超過", word);
             }
         }
         catch (Exception e)
