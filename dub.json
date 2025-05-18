@@ -1,0 +1,32 @@
+{
+	"name": "search-poc-d",
+	"configurations": [
+		{
+			"name": "application",
+			"targetType": "executable"
+		},
+		{
+			"name": "test",
+			"targetType": "executable",
+			"mainSourceFile": "test_language_table.d",
+			"versions": [
+				"unittest"
+			]
+		}
+	],
+	"buildTypes": {
+		"debug": {
+			"buildOptions": [
+				"debugMode",
+				"debugInfo"
+			]
+		},
+		"release": {
+			"buildOptions": [
+				"releaseMode",
+				"optimize",
+				"inline"
+			]
+		}
+	}
+}

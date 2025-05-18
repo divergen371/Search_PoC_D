@@ -1,0 +1,57 @@
+# SpecStory explanation file
+.specstory/.what-is-this.md
+
+# D言語の一時ファイルとバイナリ
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.dylib
+*.dll
+*.exe
+search-poc-d
+search-poc-d-optimized
+
+# Dubのビルドディレクトリとキャッシュ
+.dub/
+dub.selections.json
+
+# このプロジェクト固有のビルドディレクトリ
+build/
+bin/
+
+# D言語コンパイラが生成する一時ファイル
+__dummy.html
+docs/
+*.lst
+
+# コード生成関連の一時ファイル
+*_d_*
+*.di
+*_ddoc_
+
+# カバレッジ関連ファイル
+*.lst
+trace.def
+trace.log
+.coverage/
+*.lst
+
+# VSCodeの一時ファイル
+.vscode/*
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# OSの一時ファイル
+.DS_Store
+Thumbs.db
+.directory
+*~
+*.log
+
+# 生成されるデータファイル
+language_data.csv*
+*.cache

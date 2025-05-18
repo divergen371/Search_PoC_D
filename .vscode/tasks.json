@@ -1,0 +1,97 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "shell",
+			"label": "Create Build Directories",
+			"command": "mkdir -p ${workspaceFolder}/build/standard ${workspaceFolder}/build/optimized",
+			"presentation": {
+				"reveal": "silent",
+				"panel": "shared"
+			},
+			"problemMatcher": []
+		},
+		{
+			"type": "shell",
+			"label": "dub: Build",
+			"command": "cd ${workspaceFolder} && DFLAGS=\"-O -inline -release\" dub build --force --compiler=dmd -a=x86_64 -b=release -c=application --build-mode=allAtOnce && mkdir -p build/standard && mv search-poc-d build/standard/ 2>/dev/null || mv ${workspaceFolder}/search-poc-d build/standard/ 2>/dev/null || echo 'ビルドは成功しましたが、出力ファイルが見つかりませんでした'",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"problemMatcher": [
+				"$dmd"
+			],
+			"presentation": {
+				"reveal": "silent",
+				"panel": "shared"
+			},
+			"detail": "標準ビルド - 最適化あり",
+			"dependsOn": [
+				"Create Build Directories"
+			]
+		},
+		{
+			"type": "shell",
+			"label": "dub: Optimized Build",
+			"command": "cd ${workspaceFolder} && DFLAGS=\"-O -inline -release -boundscheck=off -mcpu=native\" dub build --force --compiler=dmd -a=x86_64 -b=release -c=application --build-mode=allAtOnce && mkdir -p build/optimized && cp search-poc-d build/optimized/search-poc-d-optimized 2>/dev/null || cp ${workspaceFolder}/search-poc-d build/optimized/search-poc-d-optimized 2>/dev/null || echo 'ビルドは成功しましたが、出力ファイルが見つかりませんでした'",
+			"group": "build",
+			"problemMatcher": [
+				"$dmd"
+			],
+			"presentation": {
+				"reveal": "always",
+				"panel": "new"
+			},
+			"detail": "超最適化ビルド - 境界チェック無効、ネイティブCPU最適化",
+			"dependsOn": [
+				"Create Build Directories"
+			]
+		},
+		{
+			"type": "shell",
+			"label": "dub: Run",
+			"command": "dub run --compiler=dmd -a=x86_64 -b=debug -c=application",
+			"group": "build",
+			"problemMatcher": [
+				"$dmd"
+			],
+			"presentation": {
+				"reveal": "always",
+				"panel": "new"
+			},
+			"detail": "デバッグビルドして実行"
+		},
+		{
+			"type": "shell",
+			"label": "Run: Standard Version",
+			"command": "${workspaceFolder}/build/standard/search-poc-d",
+			"group": {
+				"kind": "test",
+				"isDefault": true
+			},
+			"presentation": {
+				"reveal": "always",
+				"panel": "new"
+			},
+			"detail": "標準最適化版を実行",
+			"dependsOn": [
+				"dub: Build"
+			]
+		},
+		{
+			"type": "shell",
+			"label": "Run: Optimized Version",
+			"command": "${workspaceFolder}/build/optimized/search-poc-d-optimized",
+			"group": "test",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new"
+			},
+			"detail": "超最適化版を実行",
+			"dependsOn": [
+				"dub: Optimized Build"
+			]
+		}
+	]
+}
