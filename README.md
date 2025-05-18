@@ -169,3 +169,5 @@ MIT
 - 検索結果のエクスポート機能
 - exitCallBackの例外キャッチを書く
 - インデックス構築時に稀にセグメンテーションフォールトを起こす問題の解消
+- BK-Treeの代わりにHNSW（Hierarchical Navigable Small World）かVP-Tree（Vantage-Point Tree）かAnnoy（Approximate Nearest Neighbors Oh Yeah）を検討する
+- language_.dのリファクタリング
