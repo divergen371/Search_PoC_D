@@ -20,7 +20,12 @@ import std.container.dlist : DList;
 import std.bitmanip : BitArray;
 import std.datetime : Clock, SysTime;
 
-// 単語エントリの構造体
+/**
+ * 単語エントリの構造体
+ *
+ * 言語テーブルで管理される各単語の情報を格納する構造体です。
+ * 単語、ID、削除フラグの3つの要素で構成され、論理削除機能をサポートします。
+ */
 struct WordEntry
 {
     string word; // 単語
@@ -28,7 +33,12 @@ struct WordEntry
     bool isDeleted; // 削除フラグ
 }
 
-// メモリ効率の良いストリングインターニングのためのプール
+/**
+ * メモリ効率の良いストリングインターニングのためのプール
+ *
+ * 同じ文字列の重複コピーを避けるために使用される文字列プールです。
+ * 同一内容の文字列は同じメモリ領域を参照するようにして、メモリ使用量を削減します。
+ */
 private string[string] stringPool;
 
 /**
@@ -59,242 +69,12 @@ private string csvFilePath;
 private bool needsCleanup = false;
 
 /**
- * n-gram検索用のインデックス構造の最適化
- * ビット配列を使ったIDセット管理クラス
+ * プログラム終了時のクリーンアップ処理を実行する
  *
- * この構造体は、単語IDのセットを効率的に管理するためのビットベースの実装です。
- * 検索処理の高速化とメモリ使用量の最適化を目的としています。
+ * この関数は、プログラム終了時に必要なリソースの解放とファイルのクローズを行います。
+ * 開いているCSVファイルがある場合は安全にクローズし、フラッシュを実行します。
+ * 複数回呼び出されても安全になるよう、フラグによる制御を行っています。
  */
-struct GramIndexType
-{
-    private BitArray bits;
-    private size_t maxID;
-
-    /**
-     * ビット配列を指定サイズで初期化する
-     *
-     * Params:
-     *      maxSize = 初期化するビットアレイの最大サイズ（デフォルト1024）
-     */
-    void initialize(size_t maxSize = 1024)
-    {
-        // BitArrayの初期化
-        auto storage = new size_t[(maxSize + 63) / 64 + 1];
-        bits = BitArray(storage, maxSize);
-        maxID = maxSize;
-    }
-
-    /**
-     * IDをセットに追加する
-     *
-     * 必要に応じてビット配列のサイズを自動的に拡張します。
-     *
-     * Params:
-     *      id = 追加するID
-     */
-    void add(size_t id)
-    {
-        // 必要に応じてサイズを拡張
-        if (id >= maxID)
-        {
-            // 拡張時はより大きなビットアレイを作成
-            size_t newSize = id + 1024;
-            auto newStorage = new size_t[(newSize + 63) / 64 + 1];
-            auto newBits = BitArray(newStorage, newSize);
-
-            // 既存の値をコピー
-            for (size_t i = 0; i < min(bits.length, newSize); i++)
-            {
-                if (i < bits.length && bits[i])
-                    newBits[i] = true;
-            }
-
-            // 入れ替え
-            bits = newBits;
-            maxID = newSize;
-        }
-
-        if (id < bits.length)
-            bits[id] = true;
-    }
-
-    /**
-     * IDをセットから削除する
-     *
-     * Params:
-     *      id = 削除するID
-     */
-    void remove(size_t id)
-    {
-        if (id < bits.length)
-            bits[id] = false;
-    }
-
-    /**
-     * 指定したIDがセットに含まれているか確認する
-     *
-     * Params:
-     *      id = 確認するID
-     *
-     * Returns:
-     *      IDが含まれている場合はtrue、そうでなければfalse
-     */
-    bool contains(size_t id) const
-    {
-        return id < bits.length && bits[id];
-    }
-
-    /**
-     * セットに含まれるすべてのIDを配列として取得する
-     *
-     * Returns:
-     *      セットに含まれるすべてのIDの配列
-     */
-    size_t[] keys() const
-    {
-        size_t[] result;
-        for (size_t i = 0; i < bits.length; i++)
-        {
-            if (bits[i])
-                result ~= i;
-        }
-        return result;
-    }
-
-    /**
-     * セットに含まれるIDの数を取得する
-     *
-     * Returns:
-     *      含まれるIDの数
-     */
-    size_t length() const
-    {
-        size_t count = 0;
-        foreach (i; 0 .. bits.length)
-        {
-            if (bits[i])
-                count++;
-        }
-        return count;
-    }
-
-    /**
-     * セットからすべてのIDを削除する
-     */
-    void clear()
-    {
-        foreach (i; 0 .. bits.length)
-            bits[i] = false;
-    }
-
-    /**
-     * 指定されたIDセットとの論理積をとる
-     *
-     * 現在のセットと引数で指定されたセットの両方に存在するIDのみを残す
-     *
-     * Params:
-     *      other = 交差するIDセット
-     */
-    void intersectWith(const ref GramIndexType other)
-    {
-        size_t minLength = min(bits.length, other.bits.length);
-        for (size_t i = 0; i < minLength; i++)
-        {
-            bits[i] = bits[i] && other.bits[i];
-        }
-
-        // other より長い部分はfalseにする
-        for (size_t i = minLength; i < bits.length; i++)
-        {
-            bits[i] = false;
-        }
-    }
-
-    /**
-     * in演算子のオーバーロード
-     *
-     * IDがセット内に存在するかを `id in set` の構文で確認できるようにする
-     *
-     * Params:
-     *      id = 確認するID
-     *
-     * Returns:
-     *      IDが含まれている場合はtrue、そうでなければfalse
-     */
-    auto opBinaryRight(string op : "in")(size_t id) const
-    {
-        return contains(id);
-    }
-}
-
-/**
- * 進捗状況の追跡と表示を行う構造体
- *
- * 長時間かかる処理の進捗状況を追跡し、コンソールに表示するための機能を提供します。
- * 残り時間の推定や完了のレポート機能も含みます。
- */
-struct ProgressTracker
-{
-    size_t total;
-    size_t current;
-    size_t lastPercent;
-    StopWatch sw;
-
-    /**
-     * 進捗トラッカーを初期化する
-     *
-     * Params:
-     *      total = 処理する合計アイテム数
-     */
-    void initialize(size_t total)
-    {
-        this.total = total;
-        this.current = 0;
-        this.lastPercent = 0;
-        sw.reset();
-        sw.start();
-    }
-
-    /**
-     * 進捗を1つインクリメントし、必要に応じて進捗状況を表示する
-     *
-     * 5%単位で進捗状況がコンソールに表示されます。
-     * 残り時間の推定も行います。
-     */
-    void increment()
-    {
-        current++;
-        size_t percent = current * 100 / total;
-
-        if (percent > lastPercent && percent % 5 == 0)
-        {
-            lastPercent = percent;
-
-            // 残り時間の推定
-            auto elapsed = sw.peek.total!"msecs";
-            auto estimatedTotal = elapsed * total / current;
-            auto remaining = estimatedTotal - elapsed;
-
-            writef("\r進捗: %d%% (%d/%d) 残り約 %d秒    ",
-                percent, current, total, remaining / 1000);
-            stdout.flush();
-        }
-    }
-
-    /**
-     * 進捗追跡を完了し、最終的な結果を表示する
-     *
-     * 処理が完了した際に呼び出し、合計処理時間を表示します。
-     */
-    void finish()
-    {
-        sw.stop();
-        writef("\r進捗: 100%% (%d/%d) 完了 (所要時間: %d秒)    \n",
-            total, total, sw.peek.total!"seconds");
-    }
-}
-
-// クリーンアップ処理
 private void cleanup()
 {
     if (!needsCleanup)
@@ -318,7 +98,16 @@ private void cleanup()
     needsCleanup = false;
 }
 
-// シグナルハンドラ（非常にシンプルに保つ）
+/**
+ * シグナルハンドラ（非常にシンプルに保つ）
+ *
+ * SIGINT（Ctrl+C）やSIGTERMなどのシグナルを受信した際に呼び出されるハンドラです。
+ * @nogc制約があるため、ここでは単純にプログラムを終了するだけで、
+ * 実際のクリーンアップ処理はatexitで登録された関数が行います。
+ *
+ * Params:
+ *      signal = 受信したシグナル番号
+ */
 extern (C) void signalHandler(int signal) nothrow @nogc
 {
     // NOGCの制約があるため、ここでは単純にプログラムを終了するだけ
@@ -326,7 +115,13 @@ extern (C) void signalHandler(int signal) nothrow @nogc
     exit(1);
 }
 
-// 終了時にクリーンアップを実行するコールバック
+/**
+ * 終了時にクリーンアップを実行するコールバック
+ *
+ * atexit()で登録され、プログラム終了時に自動的に呼び出される関数です。
+ * 開いているファイルがある場合は安全にクローズします。
+ * nothrow制約があるため、例外が発生した場合は適切にキャッチして処理します。
+ */
 extern (C) void exitCallback() nothrow
 {
     try
@@ -345,7 +140,20 @@ extern (C) void exitCallback() nothrow
     }
 }
 
-// 自前のlowerBound（二分探索）
+/**
+ * 配列内で指定した値以上の最初の要素のインデックスを二分探索で取得する
+ *
+ * ソートされた配列に対して二分探索を行い、指定した値以上の最初の要素の
+ * インデックスを効率的に検索します。標準ライブラリのlowerBound相当の機能を提供します。
+ *
+ * Params:
+ *      T = 配列の要素型
+ *      arr = 検索対象のソート済み配列
+ *      value = 検索する値
+ *
+ * Returns:
+ *      指定した値以上の最初の要素のインデックス。該当する要素がない場合は配列の長さを返す
+ */
 size_t lowerBound(T)(T[] arr, T value)
 {
     size_t l = 0, r = arr.length;
@@ -2177,7 +1985,18 @@ void language_table()
     }
 }
 
-// CSVファイルを辞書の内容で更新する
+/**
+ * CSVファイルを辞書の内容で更新する
+ *
+ * メモリ内の辞書データをCSVファイルに書き出します。削除フラグを含むすべての
+ * エントリを一時ファイルに書き込んでから元のファイルと置き換えることで、
+ * 安全にファイルを更新します。
+ *
+ * Params:
+ *      filePath = 更新対象のCSVファイルのパス
+ *      wordDict = 単語から単語エントリへのマッピング（参照用）
+ *      idDict = IDから単語エントリへのマッピング（実際の書き込み元）
+ */
 void updateCSVFile(string filePath, WordEntry[string] wordDict, WordEntry[size_t] idDict)
 {
     // 開始時間計測
@@ -2223,7 +2042,18 @@ void updateCSVFile(string filePath, WordEntry[string] wordDict, WordEntry[size_t
     writefln("ファイル更新完了 (処理時間: %s ミリ秒)", sw.peek.total!"msecs");
 }
 
-// ファイル内の行数を推定する関数
+/**
+ * ファイル内の行数を推定する関数
+ *
+ * 大きなファイルの全行数を効率的に推定します。ファイルの先頭部分をサンプリングして
+ * 平均行長を計算し、ファイル全体のサイズから総行数を推定します。
+ * 
+ * Params:
+ *      filePath = 行数を推定するファイルのパス
+ *
+ * Returns:
+ *      推定された行数
+ */
 size_t estimateLineCount(string filePath)
 {
     auto file = File(filePath, "r");
@@ -2256,7 +2086,16 @@ size_t estimateLineCount(string filePath)
     return estimatedLines;
 }
 
-// メモリ使用状況を報告する関数
+/**
+ * メモリ使用状況を報告する関数
+ *
+ * ガベージコレクターの統計情報を取得し、現在のメモリ使用量を
+ * 分かりやすい形式で表示します。処理の各段階でのメモリ使用量を
+ * 追跡するのに便利です。
+ *
+ * Params:
+ *      phase = 処理段階を示す文字列（レポートに含まれる）
+ */
 void reportMemoryUsage(string phase)
 {
     GC.collect();
@@ -2357,20 +2196,26 @@ void displaySearchResults(T)(T[] results, long elapsedTime, string searchType,
     // 秒単位・マイクロ秒単位の両方で表示
     writefln("合計: %d件 (%s)",
         activeCount, searchType);
-    
+
     // マイクロ秒から各単位に変換
     long msec = elapsedTime / 1_000; // ミリ秒
     long usec = elapsedTime % 1_000; // マイクロ秒（余り）
-    
+
     // 明確に区分けして表示
     writefln("検索時間: %.6f秒 (%d.%03dミリ秒 = %dマイクロ秒)",
-        elapsedTime / 1_000_000.0,  // 秒（小数点表示）
-        msec / 1_000,               // 秒（整数部）
-        msec % 1_000,               // ミリ秒（小数部）
-        elapsedTime);               // 全マイクロ秒
+        elapsedTime / 1_000_000.0, // 秒（小数点表示）
+        msec / 1_000, // 秒（整数部）
+        msec % 1_000, // ミリ秒（小数部）
+        elapsedTime); // 全マイクロ秒
 }
 
-// GC統計情報を報告
+/**
+ * GC統計情報を報告
+ *
+ * ガベージコレクターの詳細な統計情報を表示します。
+ * 総容量、使用中メモリ、空きメモリ、コレクション回数などの
+ * 情報をMB単位で分かりやすく表示します。
+ */
 void reportGCStats()
 {
     auto stats = GC.stats();
@@ -2835,6 +2680,7 @@ public:
      * 複数の単語をバッチで挿入する
      *
      * メモリ効率と安全性を向上させるため、複数の単語を一度に挿入します。
+     * 大量のデータを処理する際の進捗表示やメモリ管理も含まれています。
      *
      * Params:
      *      words = 挿入する単語の配列
@@ -2954,10 +2800,14 @@ public:
                 // iterations++;
 
                 // 現在ノードとの距離を計算
-                size_t lim  = max(word.length, current.word.length) + 1;
+                size_t lim = max(word.length, current.word.length) + 1;
                 size_t dist = distanceFn(word, current.word, lim);
 
-                if (dist == 0) { current.id = id; return; }
+                if (dist == 0)
+                {
+                    current.id = id;
+                    return;
+                }
 
                 auto childPtr = dist in current.children;
                 if (childPtr is null)
@@ -3057,7 +2907,7 @@ public:
             // 現在ノードとクエリとの距離を計算
             // 実際の距離を取得するために十分な上限を設定する。
             size_t limit = (query.length >= node.word.length ? query.length : node.word.length) + 1;
-            size_t dist  = distanceFn(query, node.word, limit);
+            size_t dist = distanceFn(query, node.word, limit);
 
             // 完全一致の場合は最優先で追加
             if (dist == 0 && !selfAdded)
@@ -3111,11 +2961,28 @@ public:
 // -----------------------------
 // インデックスキャッシュ（ステージ1: prefix/suffix）
 // -----------------------------
+/**
+ * インデックスキャッシュを管理する構造体
+ *
+ * プレフィックス・サフィックス・グラム・長さインデックスをバイナリ形式で
+ * キャッシュファイルに保存・読み込みするための機能を提供します。
+ * インデックス構築の高速化に寄与します。
+ */
 struct IndexCache
 {
     string path; // キャッシュファイルの絶対パス
 
-    // CSVより新しければ有効
+    /**
+     * キャッシュファイルが有効かどうかを判定する
+     *
+     * キャッシュファイルの最終更新時刻がCSVファイルより新しい場合に有効と判定します。
+     *
+     * Params:
+     *      csvPath = 元のCSVファイルのパス
+     *
+     * Returns:
+     *      キャッシュが有効な場合はtrue、無効な場合はfalse
+     */
     bool isValid(string csvPath)
     {
         if (!exists(path))
@@ -3126,6 +2993,13 @@ struct IndexCache
     // バイナリ形式: magic(4byte) "LTC1", prefixCount(uint32), 各word(len16,data),
     //               suffixCount(uint32), 各word(len16,data)
 
+    /**
+     * プレフィックス・サフィックスインデックスをバイナリ形式でキャッシュに保存する
+     *
+     * Params:
+     *      prefix = プレフィックス検索用のRedBlackTree
+     *      suffix = サフィックス検索用のRedBlackTree
+     */
     void save(RedBlackTree!string prefix, RedBlackTree!string suffix)
     {
         auto file = File(path, "wb");
@@ -3151,6 +3025,16 @@ struct IndexCache
         }
     }
 
+    /**
+     * プレフィックス・サフィックスインデックスをキャッシュから読み込む
+     *
+     * Params:
+     *      prefix = 読み込み先のプレフィックスツリー（出力）
+     *      suffix = 読み込み先のサフィックスツリー（出力）
+     *
+     * Returns:
+     *      読み込みに成功した場合はtrue、失敗した場合はfalse
+     */
     bool load(out RedBlackTree!string prefix, out RedBlackTree!string suffix)
     {
         if (!exists(path))
@@ -3190,6 +3074,15 @@ struct IndexCache
     }
 
     // ---------- 拡張版: prefix/suffix + gramIndex + lengthIndex ----------
+    /**
+     * 全インデックス（プレフィックス・サフィックス・グラム・長さ）をキャッシュに保存する
+     *
+     * Params:
+     *      prefix = プレフィックス検索用のRedBlackTree
+     *      suffix = サフィックス検索用のRedBlackTree
+     *      gram = n-gram検索用のインデックス
+     *      lenIdx = 長さ検索用のインデックス
+     */
     void saveFull(
         RedBlackTree!string prefix,
         RedBlackTree!string suffix,
@@ -3243,6 +3136,18 @@ struct IndexCache
         }
     }
 
+    /**
+     * 全インデックス（プレフィックス・サフィックス・グラム・長さ）をキャッシュから読み込む
+     *
+     * Params:
+     *      prefix = 読み込み先のプレフィックスツリー（出力）
+     *      suffix = 読み込み先のサフィックスツリー（出力）
+     *      gram = 読み込み先のn-gramインデックス（出力）
+     *      lenIdx = 読み込み先の長さインデックス（出力）
+     *
+     * Returns:
+     *      読み込みに成功した場合はtrue、失敗した場合はfalse
+     */
     bool loadFull(out RedBlackTree!string prefix,
         out RedBlackTree!string suffix,
         ref GramIndexType[string] gram,
@@ -3332,6 +3237,17 @@ struct IndexCache
 }
 
 // バイナリI/Oヘルパー
+/**
+ * 指定した型の値をバイナリ形式でファイルに書き込む
+ *
+ * 型Tの値をバイト配列に変換してファイルに直接書き込みます。
+ * エンディアンに依存するため、同じアーキテクチャ間でのみ使用してください。
+ *
+ * Params:
+ *      T = 書き込む値の型
+ *      f = 書き込み先のファイル
+ *      v = 書き込む値
+ */
 private void writeValue(T)(File f, T v)
 {
     ubyte[T.sizeof] tmp;
@@ -3341,6 +3257,17 @@ private void writeValue(T)(File f, T v)
     f.rawWrite(tmp[]);
 }
 
+/**
+ * 指定した型の値をバイナリ形式でファイルから読み込む
+ *
+ * ファイルからバイト配列を読み込み、型Tの値に変換します。
+ * writeValueで書き込んだデータを読み込むために使用します。
+ *
+ * Params:
+ *      T = 読み込む値の型
+ *      f = 読み込み元のファイル
+ *      v = 読み込み先の変数（参照）
+ */
 private void readValue(T)(File f, ref T v)
 {
     ubyte[T.sizeof] tmp;
@@ -3348,4 +3275,240 @@ private void readValue(T)(File f, ref T v)
     import core.stdc.string : memcpy;
 
     memcpy(&v, tmp.ptr, T.sizeof);
+}
+
+/**
+ * n-gram検索用のインデックス構造の最適化
+ * ビット配列を使ったIDセット管理クラス
+ *
+ * この構造体は、単語IDのセットを効率的に管理するためのビットベースの実装です。
+ * 検索処理の高速化とメモリ使用量の最適化を目的としています。
+ */
+struct GramIndexType
+{
+    private BitArray bits;
+    private size_t maxID;
+
+    /**
+     * ビット配列を指定サイズで初期化する
+     *
+     * Params:
+     *      maxSize = 初期化するビットアレイの最大サイズ（デフォルト1024）
+     */
+    void initialize(size_t maxSize = 1024)
+    {
+        // BitArrayの初期化
+        auto storage = new size_t[(maxSize + 63) / 64 + 1];
+        bits = BitArray(storage, maxSize);
+        maxID = maxSize;
+    }
+
+    /**
+     * IDをセットに追加する
+     *
+     * 必要に応じてビット配列のサイズを自動的に拡張します。
+     *
+     * Params:
+     *      id = 追加するID
+     */
+    void add(size_t id)
+    {
+        // 必要に応じてサイズを拡張
+        if (id >= maxID)
+        {
+            // 拡張時はより大きなビットアレイを作成
+            size_t newSize = id + 1024;
+            auto newStorage = new size_t[(newSize + 63) / 64 + 1];
+            auto newBits = BitArray(newStorage, newSize);
+
+            // 既存の値をコピー
+            for (size_t i = 0; i < min(bits.length, newSize); i++)
+            {
+                if (i < bits.length && bits[i])
+                    newBits[i] = true;
+            }
+
+            // 入れ替え
+            bits = newBits;
+            maxID = newSize;
+        }
+
+        if (id < bits.length)
+            bits[id] = true;
+    }
+
+    /**
+     * IDをセットから削除する
+     *
+     * Params:
+     *      id = 削除するID
+     */
+    void remove(size_t id)
+    {
+        if (id < bits.length)
+            bits[id] = false;
+    }
+
+    /**
+     * 指定したIDがセットに含まれているか確認する
+     *
+     * Params:
+     *      id = 確認するID
+     *
+     * Returns:
+     *      IDが含まれている場合はtrue、そうでなければfalse
+     */
+    bool contains(size_t id) const
+    {
+        return id < bits.length && bits[id];
+    }
+
+    /**
+     * セットに含まれるすべてのIDを配列として取得する
+     *
+     * Returns:
+     *      セットに含まれるすべてのIDの配列
+     */
+    size_t[] keys() const
+    {
+        size_t[] result;
+        for (size_t i = 0; i < bits.length; i++)
+        {
+            if (bits[i])
+                result ~= i;
+        }
+        return result;
+    }
+
+    /**
+     * セットに含まれるIDの数を取得する
+     *
+     * Returns:
+     *      含まれるIDの数
+     */
+    size_t length() const
+    {
+        size_t count = 0;
+        foreach (i; 0 .. bits.length)
+        {
+            if (bits[i])
+                count++;
+        }
+        return count;
+    }
+
+    /**
+     * セットからすべてのIDを削除する
+     */
+    void clear()
+    {
+        foreach (i; 0 .. bits.length)
+            bits[i] = false;
+    }
+
+    /**
+     * 指定されたIDセットとの論理積をとる
+     *
+     * 現在のセットと引数で指定されたセットの両方に存在するIDのみを残す
+     *
+     * Params:
+     *      other = 交差するIDセット
+     */
+    void intersectWith(const ref GramIndexType other)
+    {
+        size_t minLength = min(bits.length, other.bits.length);
+        for (size_t i = 0; i < minLength; i++)
+        {
+            bits[i] = bits[i] && other.bits[i];
+        }
+
+        // other より長い部分はfalseにする
+        for (size_t i = minLength; i < bits.length; i++)
+        {
+            bits[i] = false;
+        }
+    }
+
+    /**
+     * in演算子のオーバーロード
+     *
+     * IDがセット内に存在するかを `id in set` の構文で確認できるようにする
+     *
+     * Params:
+     *      id = 確認するID
+     *
+     * Returns:
+     *      IDが含まれている場合はtrue、そうでなければfalse
+     */
+    auto opBinaryRight(string op : "in")(size_t id) const
+    {
+        return contains(id);
+    }
+}
+
+/**
+ * 進捗状況の追跡と表示を行う構造体
+ *
+ * 長時間かかる処理の進捗状況を追跡し、コンソールに表示するための機能を提供します。
+ * 残り時間の推定や完了のレポート機能も含みます。
+ */
+struct ProgressTracker
+{
+    size_t total;
+    size_t current;
+    size_t lastPercent;
+    StopWatch sw;
+
+    /**
+     * 進捗トラッカーを初期化する
+     *
+     * Params:
+     *      total = 処理する合計アイテム数
+     */
+    void initialize(size_t total)
+    {
+        this.total = total;
+        this.current = 0;
+        this.lastPercent = 0;
+        sw.reset();
+        sw.start();
+    }
+
+    /**
+     * 進捗を1つインクリメントし、必要に応じて進捗状況を表示する
+     *
+     * 5%単位で進捗状況がコンソールに表示されます。
+     * 残り時間の推定も行います。
+     */
+    void increment()
+    {
+        current++;
+        size_t percent = current * 100 / total;
+
+        if (percent > lastPercent && percent % 5 == 0)
+        {
+            lastPercent = percent;
+
+            // 残り時間の推定
+            auto elapsed = sw.peek.total!"msecs";
+            auto estimatedTotal = elapsed * total / current;
+            auto remaining = estimatedTotal - elapsed;
+
+            writef("\r進捗: %d%% (%d/%d) 残り約 %d秒    ",
+                percent, current, total, remaining / 1000);
+            stdout.flush();
+        }
+    }
+
+    /**
+     * 進捗追跡を完了し、最終的な結果を表示する
+     *
+     * 処理が完了した際に呼び出し、合計処理時間を表示します。
+     */
+    void finish()
+    {
+        sw.stop();
+        writef("\r進捗: 100%% (%d/%d) 完了 (所要時間: %d秒)    \n",
+            total, total, sw.peek.total!"seconds");
+    }
 }

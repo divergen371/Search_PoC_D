@@ -1,3 +1,10 @@
+/**
+ * データ生成モジュール
+ *
+ * 言語テーブルのテスト用に大量の英単語風のランダム文字列を生成し、
+ * CSVファイルに出力するための機能を提供します。
+ * 自然な単語に近い文字列パターンの生成をサポートしています。
+ */
 module data_generator;
 
 import std.stdio;
@@ -11,14 +18,29 @@ import std.path;
 import std.file;
 import std.datetime.stopwatch;
 
-// ランダム単語生成のための文字セット
+/**
+ * ランダム単語生成のための文字セット
+ */
 immutable string vowels = "aiueo";
 immutable string consonants = "bcdfghjklmnpqrstvwxyz";
 immutable string[] commonWordEndings = [
     "tion", "ing", "ed", "ly", "ment", "ness", "er", "or", "ist", "ism"
 ];
 
-// ランダムな英単語風の文字列を生成
+/**
+ * ランダムな英単語風の文字列を生成
+ *
+ * 母音と子音を適切に配置して、英語らしい音韻パターンを持つ
+ * ランダムな文字列を生成します。
+ *
+ * Params:
+ *      rnd = 乱数生成器への参照
+ *      minLength = 生成する単語の最小長（デフォルト3）
+ *      maxLength = 生成する単語の最大長（デフォルト12）
+ *
+ * Returns:
+ *      生成されたランダム単語
+ */
 string generateRandomWord(ref Random rnd, size_t minLength = 3, size_t maxLength = 12)
 {
     // 長さを決定
@@ -51,7 +73,19 @@ string generateRandomWord(ref Random rnd, size_t minLength = 3, size_t maxLength
     return word.idup;
 }
 
-// より自然な単語を生成するための補助関数
+/**
+ * より自然な単語を生成するための補助関数
+ *
+ * 基本的な単語に一般的な英語の接尾辞を追加することで、
+ * より自然な外観の単語を生成します。
+ *
+ * Params:
+ *      rnd = 乱数生成器への参照
+ *      word = 基本となる単語
+ *
+ * Returns:
+ *      拡張された単語（10%の確率で接尾辞が追加される）
+ */
 string enhanceWord(ref Random rnd, string word)
 {
     // 10%の確率で語尾に一般的な接尾辞を追加
@@ -63,7 +97,17 @@ string enhanceWord(ref Random rnd, string word)
     return word;
 }
 
-// 指定した数の単語をCSVファイルに出力
+/**
+ * 指定した数の単語をCSVファイルに出力
+ *
+ * 指定された数の一意なランダム単語を生成し、CSVファイルに書き出します。
+ * 進捗表示とパフォーマンス統計も提供します。
+ *
+ * Params:
+ *      outputPath = 出力先CSVファイルのパス
+ *      wordCount = 生成する単語の数
+ *      showProgress = 進捗状況を表示するかどうか（デフォルトtrue）
+ */
 void generateWordDataset(string outputPath, size_t wordCount, bool showProgress = true)
 {
     StopWatch sw;
@@ -130,7 +174,17 @@ void generateWordDataset(string outputPath, size_t wordCount, bool showProgress 
     writefln("処理時間: %s", sw.peek);
 }
 
-// より高度なデータセット生成（ランダム削除フラグと大量データ）
+/**
+ * より高度なデータセット生成（ランダム削除フラグと大量データ）
+ *
+ * 大量のデータ生成に最適化されたバージョンです。削除フラグの
+ * ランダム設定、バッファリングによる高速化、メモリ効率の向上を含みます。
+ *
+ * Params:
+ *      outputPath = 出力先CSVファイルのパス
+ *      wordCount = 生成する単語の数
+ *      deletedRatio = 削除フラグを立てる単語の割合（デフォルト0.05 = 5%）
+ */
 void generateAdvancedDataset(string outputPath, size_t wordCount, double deletedRatio = 0.05)
 {
     StopWatch sw;
