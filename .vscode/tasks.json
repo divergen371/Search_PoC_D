@@ -14,7 +14,7 @@
 		{
 			"type": "shell",
 			"label": "dub: Build",
-			"command": "cd ${workspaceFolder} && DFLAGS=\"-O -inline -release\" dub build --force --compiler=dmd -a=x86_64 -b=release -c=application --build-mode=allAtOnce && mkdir -p build/standard && mv search-poc-d build/standard/ 2>/dev/null || mv ${workspaceFolder}/search-poc-d build/standard/ 2>/dev/null || echo 'ビルドは成功しましたが、出力ファイルが見つかりませんでした'",
+			"command": "cd ${workspaceFolder} && DFLAGS=\"-O -inline -release\" dub build --force --compiler=dmd -a=x86_64 -b=release -c=application --parallel --build-mode=allAtOnce && mkdir -p build/standard && mv search-poc-d build/standard/ 2>/dev/null || mv ${workspaceFolder}/search-poc-d build/standard/ 2>/dev/null || echo 'ビルドは成功しましたが、出力ファイルが見つかりませんでした'",
 			"group": {
 				"kind": "build",
 				"isDefault": true
@@ -34,7 +34,7 @@
 		{
 			"type": "shell",
 			"label": "dub: Optimized Build",
-			"command": "cd ${workspaceFolder} && DFLAGS=\"-O -inline -release -boundscheck=off -mcpu=native\" dub build --force --compiler=dmd -a=x86_64 -b=release -c=application --build-mode=allAtOnce && mkdir -p build/optimized && cp search-poc-d build/optimized/search-poc-d-optimized 2>/dev/null || cp ${workspaceFolder}/search-poc-d build/optimized/search-poc-d-optimized 2>/dev/null || echo 'ビルドは成功しましたが、出力ファイルが見つかりませんでした'",
+			"command": "cd ${workspaceFolder} && DFLAGS=\"-O -inline -release -boundscheck=off -mcpu=native\" dub build --force --compiler=dmd -a=x86_64 -b=release -c=application --paralle --build-mode=allAtOnce && mkdir -p build/optimized && cp search-poc-d build/optimized/search-poc-d-optimized 2>/dev/null || cp ${workspaceFolder}/search-poc-d build/optimized/search-poc-d-optimized 2>/dev/null || echo 'ビルドは成功しましたが、出力ファイルが見つかりませんでした'",
 			"group": "build",
 			"problemMatcher": [
 				"$dmd"
@@ -96,7 +96,7 @@
 		{
 			"type": "shell",
 			"label": "dub: LDC Build",
-			"command": "cd ${workspaceFolder} && DFLAGS=\"-O3 -release -enable-inlining\" dub build --force --compiler=ldc2 -a=x86_64 -b=release -c=application --build-mode=allAtOnce && mkdir -p build/ldc-standard && mv search-poc-d build/ldc-standard/search-poc-d-ldc 2>/dev/null || mv ${workspaceFolder}/search-poc-d build/ldc-standard/search-poc-d-ldc 2>/dev/null || echo 'ビルドは成功しましたが、出力ファイルが見つかりませんでした'",
+			"command": "cd ${workspaceFolder} && DFLAGS=\"-O3 -release -enable-inlining\" dub build --force --compiler=ldc2 -a=x86_64 -b=release -c=application --parallel --build-mode=allAtOnce && mkdir -p build/ldc-standard && mv search-poc-d build/ldc-standard/search-poc-d-ldc 2>/dev/null || mv ${workspaceFolder}/search-poc-d build/ldc-standard/search-poc-d-ldc 2>/dev/null || echo 'ビルドは成功しましたが、出力ファイルが見つかりませんでした'",
 			"group": "build",
 			"problemMatcher": [
 				"$dmd"
@@ -113,7 +113,7 @@
 		{
 			"type": "shell",
 			"label": "dub: LDC Optimized Build",
-			"command": "cd ${workspaceFolder} && DFLAGS=\"-O3 -release -enable-inlining -boundscheck=off -mcpu=native -flto=full\" dub build --force --compiler=ldc2 -a=x86_64 -b=release -c=application --build-mode=allAtOnce && mkdir -p build/ldc-optimized && cp search-poc-d build/ldc-optimized/search-poc-d-ldc-optimized 2>/dev/null || cp ${workspaceFolder}/search-poc-d build/ldc-optimized/search-poc-d-ldc-optimized 2>/dev/null || echo 'ビルドは成功しましたが、出力ファイルが見つかりませんでした'",
+			"command": "cd ${workspaceFolder} && DFLAGS=\"-O3 -release -enable-inlining -boundscheck=off -mcpu=native -flto=full\" dub build --force --compiler=ldc2 -a=x86_64 -b=release -c=application --parallel --build-mode=allAtOnce && mkdir -p build/ldc-optimized && cp search-poc-d build/ldc-optimized/search-poc-d-ldc-optimized 2>/dev/null || cp ${workspaceFolder}/search-poc-d build/ldc-optimized/search-poc-d-ldc-optimized 2>/dev/null || echo 'ビルドは成功しましたが、出力ファイルが見つかりませんでした'",
 			"group": "build",
 			"problemMatcher": [
 				"$dmd"
