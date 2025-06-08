@@ -339,6 +339,29 @@ class CommandInterface
             return true;
         }
         
+        // ID範囲検索
+        auto idRangeMatch = matchFirst(line, idRangeRegex);
+        if (!idRangeMatch.empty)
+        {
+            size_t minID = to!size_t(idRangeMatch[2]);
+            size_t maxID = to!size_t(idRangeMatch[3]);
+            
+            if (minID > maxID)
+            {
+                writeln("エラー: IDの範囲指定が不正です（最小値 > 最大値）");
+                return true;
+            }
+            
+            writefln("ID範囲検索結果（ID: %d-%d）:", minID, maxID);
+            
+            sw.start();
+            auto results = searchEngine.searchByIDRange(minID, maxID);
+            sw.stop();
+            
+            resultDisplay.displaySearchResult(results);
+            return true;
+        }
+        
         return false; // 検索コマンドではない
     }
     

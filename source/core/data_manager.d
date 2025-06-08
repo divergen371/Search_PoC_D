@@ -65,7 +65,7 @@ class DataManager
         wordDict.clear();
         idDict.clear();
         lengthIndex.clear();
-        
+
         // BK-Treeは新しく作成
         bkTree = new BKTree(&damerauDistanceLimited, 10);
 
@@ -191,7 +191,7 @@ class DataManager
         }
 
         writefln("プレフィックス・サフィックスインデックス構築完了: %d + %d エントリ",
-                prefixTree.length, suffixTree.length);
+            prefixTree.length, suffixTree.length);
     }
 
     /**
@@ -288,7 +288,7 @@ class DataManager
         }
 
         writefln("N-gramインデックス構築完了: %d グラム, %d 長さカテゴリ",
-                gramIndex.length, lengthIndex.length);
+            gramIndex.length, lengthIndex.length);
     }
 
     /**
@@ -372,14 +372,14 @@ class DataManager
         foreach (word; wordsToRemove)
         {
             auto entry = wordDict[word];
-            
+
             // プレフィックス木から削除
             prefixTree.removeKey(word);
-            
+
             // サフィックス木から削除
             string revWord = revStr(word);
             suffixTree.removeKey(revWord);
-            
+
             // 長さインデックスから削除
             size_t len = word.length;
             if (len in lengthIndex && entry.id in lengthIndex[len])
@@ -391,11 +391,11 @@ class DataManager
                     lengthIndex.remove(len);
                 }
             }
-            
+
             // 辞書から削除
             wordDict.remove(word);
             idDict.remove(entry.id);
-            
+
             removedEntries++;
         }
 
@@ -412,12 +412,12 @@ class DataManager
                     idsToRemove ~= id;
                 }
             }
-            
+
             foreach (id; idsToRemove)
             {
                 idSet.remove(id);
             }
-            
+
             // 空になったgramを削除対象に追加
             if (idSet.length() == 0)
             {
@@ -435,7 +435,7 @@ class DataManager
         writefln("インデックス最適化完了: %.2f秒", sw.peek.total!"msecs" / 1000.0);
         writefln("  削除されたエントリ: %d", removedEntries);
         writefln("  最適化されたN-gram: %d", optimizedGrams);
-        
+
         // メモリ使用量をレポート
         reportMemoryUsage("インデックス最適化後");
     }
@@ -453,7 +453,7 @@ class DataManager
         BKTree bkTree)
     {
         writeln("\n=== インデックス統計情報 ===");
-        
+
         // 基本統計
         size_t activeWords = 0;
         size_t deletedWords = 0;
@@ -464,37 +464,39 @@ class DataManager
             else
                 activeWords++;
         }
-        
+
         writefln("単語辞書サイズ: %d (アクティブ: %d, 削除済み: %d)",
-                wordDict.length, activeWords, deletedWords);
+            wordDict.length, activeWords, deletedWords);
         writefln("ID辞書サイズ: %d", idDict.length);
         writefln("プレフィックス木サイズ: %d", prefixTree.length);
         writefln("サフィックス木サイズ: %d", suffixTree.length);
         writefln("N-gramインデックス数: %d", gramIndex.length);
         writefln("長さインデックス数: %d", lengthIndex.length);
-        
+
         // N-gramインデックスの詳細統計
         size_t totalGramEntries = 0;
         size_t maxGramSize = 0;
         size_t minGramSize = size_t.max;
-        
+
         foreach (idSet; gramIndex.values)
         {
             size_t gramSize = idSet.length();
             totalGramEntries += gramSize;
-            if (gramSize > maxGramSize) maxGramSize = gramSize;
-            if (gramSize < minGramSize) minGramSize = gramSize;
+            if (gramSize > maxGramSize)
+                maxGramSize = gramSize;
+            if (gramSize < minGramSize)
+                minGramSize = gramSize;
         }
-        
-        double avgGramSize = gramIndex.length > 0 ? 
-            cast(double)totalGramEntries / gramIndex.length : 0.0;
-        
+
+        double avgGramSize = gramIndex.length > 0 ?
+            cast(double) totalGramEntries / gramIndex.length : 0.0;
+
         writefln("N-gram統計:");
         writefln("  総エントリ数: %d", totalGramEntries);
         writefln("  平均サイズ: %.2f", avgGramSize);
         writefln("  最大サイズ: %d", maxGramSize);
         writefln("  最小サイズ: %d", minGramSize == size_t.max ? 0 : minGramSize);
-        
+
         // 長さインデックスの統計
         writeln("長さ別単語数:");
         auto sortedLengths = lengthIndex.keys.sort();
@@ -504,18 +506,18 @@ class DataManager
         }
         if (sortedLengths.length > 10)
         {
-            writefln("  ... その他 %d カテゴリ", sortedLengths.length - 10);
+            writefln("  ... その他 %d カテゴリ", cast(int)(sortedLengths.length - 10));
         }
-        
+
         // BK-Tree統計
         if (bkTree !is null)
         {
             bkTree.printStats();
         }
-        
+
         writeln("==========================\n");
     }
-    
+
     /**
      * インデックスの整合性をチェックする
      */
@@ -530,25 +532,26 @@ class DataManager
         writeln("インデックスの整合性をチェック中...");
         bool isValid = true;
         size_t errorCount = 0;
-        
+
         // 1. 辞書の整合性チェック
         foreach (word, entry; wordDict)
         {
             if (entry.id !in idDict)
             {
-                writefln("エラー: 単語 '%s' (ID: %d) がID辞書に存在しません", word, entry.id);
+                writefln("エラー: 単語 '%s' (ID: %d) がID辞書に存在しません", word, entry
+                        .id);
                 isValid = false;
                 errorCount++;
             }
             else if (idDict[entry.id].word != word)
             {
-                writefln("エラー: ID %d の単語が不一致: '%s' vs '%s'", 
-                        entry.id, word, idDict[entry.id].word);
+                writefln("エラー: ID %d の単語が不一致: '%s' vs '%s'",
+                    entry.id, word, idDict[entry.id].word);
                 isValid = false;
                 errorCount++;
             }
         }
-        
+
         // 2. プレフィックス木の整合性チェック
         foreach (word; prefixTree)
         {
@@ -564,7 +567,7 @@ class DataManager
                 // これは警告のみ（エラーカウントは増やさない）
             }
         }
-        
+
         // 3. 長さインデックスの整合性チェック
         foreach (length, idSet; lengthIndex)
         {
@@ -579,13 +582,13 @@ class DataManager
                 else if (idDict[id].word.length != length)
                 {
                     writefln("エラー: ID %d の単語長が不一致: 期待 %d, 実際 %d",
-                            id, length, idDict[id].word.length);
+                        id, length, idDict[id].word.length);
                     isValid = false;
                     errorCount++;
                 }
             }
         }
-        
+
         if (isValid)
         {
             writeln("インデックスの整合性チェック: 正常");
@@ -594,9 +597,7 @@ class DataManager
         {
             writefln("インデックスの整合性チェック: %d個のエラーが見つかりました", errorCount);
         }
-        
+
         return isValid;
     }
-} 
-
- 
+}
