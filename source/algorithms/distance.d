@@ -33,6 +33,7 @@ size_t damerauDistanceLimited(string s, string t, size_t maxDist)
     debug (verbose)
     {
         import std.stdio : writefln, writeln;
+
         writefln("距離計算: s='%s'(%d) と t='%s'(%d), maxDist=%d", s, m, t, n, maxDist);
     }
 
@@ -42,6 +43,7 @@ size_t damerauDistanceLimited(string s, string t, size_t maxDist)
         debug (verbose)
         {
             import std.stdio : writeln;
+
             writeln("  同一文字列: 結果=0");
         }
         return 0;
@@ -54,6 +56,7 @@ size_t damerauDistanceLimited(string s, string t, size_t maxDist)
         debug (verbose)
         {
             import std.stdio : writeln;
+
             writeln("  早期リターン: 長さの差が制限を超えています");
         }
         return maxDist + 1;
@@ -104,6 +107,7 @@ size_t damerauDistanceLimited(string s, string t, size_t maxDist)
     debug (verbose)
     {
         import std.stdio : writefln;
+
         writefln("  計算結果: 距離=%d", prev[n]);
     }
     return prev[n];
@@ -126,8 +130,10 @@ size_t levenshteinDistance(string s, string t)
     size_t m = s.length;
     size_t n = t.length;
 
-    if (m == 0) return n;
-    if (n == 0) return m;
+    if (m == 0)
+        return n;
+    if (n == 0)
+        return m;
 
     // 2行のDPテーブルのみを使用してメモリを節約
     size_t[] prev = new size_t[n + 1];
@@ -144,9 +150,10 @@ size_t levenshteinDistance(string s, string t)
         {
             size_t cost = (s[i - 1] == t[j - 1]) ? 0 : 1;
             curr[j] = min(
-                prev[j] + 1,        // 削除
-                curr[j - 1] + 1,    // 挿入
-                prev[j - 1] + cost  // 置換
+                prev[j] + 1, // 削除
+                curr[j - 1] + 1, // 挿入
+                prev[j - 1] + cost // 置換
+                
             );
         }
         prev[] = curr[];
@@ -172,15 +179,18 @@ size_t levenshteinDistanceLimited(string s, string t, size_t maxDist)
     size_t n = t.length;
 
     // 自分自身との比較は常に距離0
-    if (s == t) return 0;
+    if (s == t)
+        return 0;
 
     // 長さの差が最大距離を超えるなら早期リターン
     if (abs(cast(int) m - cast(int) n) > maxDist)
         return maxDist + 1;
 
     // 空文字列の処理
-    if (m == 0) return n <= maxDist ? n : maxDist + 1;
-    if (n == 0) return m <= maxDist ? m : maxDist + 1;
+    if (m == 0)
+        return n <= maxDist ? n : maxDist + 1;
+    if (n == 0)
+        return m <= maxDist ? m : maxDist + 1;
 
     size_t[] prev = new size_t[n + 1];
     size_t[] curr = new size_t[n + 1];
@@ -192,24 +202,25 @@ size_t levenshteinDistanceLimited(string s, string t, size_t maxDist)
     {
         curr[0] = i;
         size_t minInRow = maxDist + 1;
-        
+
         foreach (j; 1 .. n + 1)
         {
             size_t cost = (s[i - 1] == t[j - 1]) ? 0 : 1;
             curr[j] = min(
-                prev[j] + 1,        // 削除
-                curr[j - 1] + 1,    // 挿入
-                prev[j - 1] + cost  // 置換
+                prev[j] + 1, // 削除
+                curr[j - 1] + 1, // 挿入
+                prev[j - 1] + cost // 置換
+                
             );
-            
+
             if (curr[j] < minInRow)
                 minInRow = curr[j];
         }
-        
+
         // 行の最小値が制限を超えた場合は早期終了
         if (minInRow > maxDist)
             return maxDist + 1;
-            
+
         prev[] = curr[];
     }
 
@@ -258,7 +269,8 @@ size_t longestCommonSubsequence(string s, string t)
     size_t m = s.length;
     size_t n = t.length;
 
-    if (m == 0 || n == 0) return 0;
+    if (m == 0 || n == 0)
+        return 0;
 
     // メモリ効率のため2行のみ使用
     size_t[] prev = new size_t[n + 1];
@@ -294,7 +306,8 @@ size_t longestCommonSubstring(string s, string t)
     size_t m = s.length;
     size_t n = t.length;
 
-    if (m == 0 || n == 0) return 0;
+    if (m == 0 || n == 0)
+        return 0;
 
     size_t[][] dp = new size_t[][](m + 1, n + 1);
     size_t maxLength = 0;
@@ -331,12 +344,16 @@ size_t longestCommonSubstring(string s, string t)
  */
 double jaroDistance(string s, string t)
 {
-    if (s.length == 0 && t.length == 0) return 1.0;
-    if (s.length == 0 || t.length == 0) return 0.0;
-    if (s == t) return 1.0;
+    if (s.length == 0 && t.length == 0)
+        return 1.0;
+    if (s.length == 0 || t.length == 0)
+        return 0.0;
+    if (s == t)
+        return 1.0;
 
     size_t matchWindow = max(s.length, t.length) / 2;
-    if (matchWindow > 0) matchWindow--;
+    if (matchWindow > 0)
+        matchWindow--;
 
     bool[] sMatches = new bool[s.length];
     bool[] tMatches = new bool[t.length];
@@ -352,8 +369,9 @@ double jaroDistance(string s, string t)
 
         foreach (j; start .. end)
         {
-            if (tMatches[j] || s[i] != t[j]) continue;
-            
+            if (tMatches[j] || s[i] != t[j])
+                continue;
+
             sMatches[i] = true;
             tMatches[j] = true;
             matches++;
@@ -361,23 +379,28 @@ double jaroDistance(string s, string t)
         }
     }
 
-    if (matches == 0) return 0.0;
+    if (matches == 0)
+        return 0.0;
 
     // 転置の検出
     size_t k = 0;
     foreach (i; 0 .. s.length)
     {
-        if (!sMatches[i]) continue;
-        
-        while (!tMatches[k]) k++;
-        
-        if (s[i] != t[k]) transpositions++;
+        if (!sMatches[i])
+            continue;
+
+        while (!tMatches[k])
+            k++;
+
+        if (s[i] != t[k])
+            transpositions++;
         k++;
     }
 
-    return (cast(double)matches / s.length + 
-            cast(double)matches / t.length + 
-            cast(double)(matches - transpositions / 2) / matches) / 3.0;
+    return (cast(double) matches / s.length +
+            cast(double) matches / t.length +
+            cast(
+                double)(matches - transpositions / 2) / matches) / 3.0;
 }
 
 /**
@@ -394,13 +417,14 @@ double jaroDistance(string s, string t)
 double jaroWinklerDistance(string s, string t, double threshold = 0.7)
 {
     double jaroScore = jaroDistance(s, t);
-    
-    if (jaroScore < threshold) return jaroScore;
+
+    if (jaroScore < threshold)
+        return jaroScore;
 
     // 共通プレフィックスの長さを計算（最大4文字）
     size_t prefixLength = 0;
     size_t maxPrefixLength = min(min(s.length, t.length), 4);
-    
+
     foreach (i; 0 .. maxPrefixLength)
     {
         if (s[i] == t[i])
@@ -410,6 +434,4 @@ double jaroWinklerDistance(string s, string t, double threshold = 0.7)
     }
 
     return jaroScore + (prefixLength * 0.1 * (1.0 - jaroScore));
-} 
-
- 
+}

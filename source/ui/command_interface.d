@@ -36,12 +36,12 @@ class CommandInterface
     private bool[size_t][size_t] lengthIndex;
     private BKTree bkTree;
     private string csvFilePath;
-    
+
     // コンポーネント
     private SearchEngine searchEngine;
     private ResultDisplay resultDisplay;
     private CSVProcessor csvProcessor;
-    
+
     // 正規表現パターン
     private static immutable auto helpRegex = regex(r"^:(help|h|\?)$");
     private static immutable auto exitRegex = regex(r"^:(exit|quit|q)$");
@@ -62,19 +62,19 @@ class CommandInterface
     private static immutable auto statsRegex = regex(r"^:(stats|statistics)$");
     private static immutable auto deleteRegex = regex(r"^:(delete|del)\s+(.+)$");
     private static immutable auto undeleteRegex = regex(r"^:(undelete|undel)\s+(.+)$");
-    
+
     /**
      * コンストラクタ
      */
     this(ref WordEntry[string] wordDict,
-         ref WordEntry[size_t] idDict,
-         ref size_t nextID,
-         ref RedBlackTree!string prefixTree,
-         ref RedBlackTree!string suffixTree,
-         ref GramIndexType[string] gramIndex,
-         ref bool[size_t][size_t] lengthIndex,
-         ref BKTree bkTree,
-         string csvFilePath)
+        ref WordEntry[size_t] idDict,
+        ref size_t nextID,
+        ref RedBlackTree!string prefixTree,
+        ref RedBlackTree!string suffixTree,
+        ref GramIndexType[string] gramIndex,
+        ref bool[size_t][size_t] lengthIndex,
+        ref BKTree bkTree,
+        string csvFilePath)
     {
         this.wordDict = wordDict;
         this.idDict = idDict;
@@ -85,39 +85,39 @@ class CommandInterface
         this.lengthIndex = lengthIndex;
         this.bkTree = bkTree;
         this.csvFilePath = csvFilePath;
-        
+
         // SearchContextを作成
         SearchContext context;
         context.wordDict = &wordDict;
         context.idDict = &idDict;
-        context.prefixTree = cast(void*)prefixTree;
-        context.suffixTree = cast(void*)suffixTree;
+        context.prefixTree = cast(void*) prefixTree;
+        context.suffixTree = cast(void*) suffixTree;
         context.gramIndex = cast(void*)&gramIndex;
         context.lengthIndex = cast(void*)&lengthIndex;
-        context.bkTree = cast(void*)bkTree;
-        
+        context.bkTree = cast(void*) bkTree;
+
         // コンポーネントの初期化
         this.searchEngine = new SearchEngine(context);
         this.resultDisplay = new ResultDisplay(&idDict);
         this.csvProcessor = new CSVProcessor();
-        
+
         writeln("コマンドインターフェースを初期化しました");
     }
-    
+
     /**
      * インタラクティブモードを開始する
      */
     void run()
     {
         showWelcomeMessage();
-        
+
         string line;
         while (true)
         {
             // プロンプトを表示
             write("> ");
             stdout.flush();
-            
+
             // 入力を読み込む
             line = readln();
             if (line is null) // EOF（Ctrl+D）で終了
@@ -125,20 +125,20 @@ class CommandInterface
                 writeln("\nEOF（Ctrl+D）を検出しました。終了します...");
                 break;
             }
-            
+
             // 入力を整形
             line = strip(line);
-            
+
             // 空行はスキップ
             if (line.empty)
                 continue;
-            
+
             // コマンドを処理
             if (!processCommand(line))
                 break; // 終了コマンドが実行された
         }
     }
-    
+
     /**
      * 単一のコマンドを処理する
      * 
@@ -155,36 +155,36 @@ class CommandInterface
                 showHelp();
                 return true;
             }
-            
+
             // 終了コマンド
             if (matchFirst(line, exitRegex))
             {
                 writeln("プログラムを終了します...");
                 return false;
             }
-            
+
             // 統計情報表示
             if (matchFirst(line, statsRegex))
             {
                 showStatistics();
                 return true;
             }
-            
+
             // インデックス再構築
             if (matchFirst(line, rebuildRegex))
             {
                 rebuildIndices();
                 return true;
             }
-            
+
             // 検索コマンド群
             if (processSearchCommands(line))
                 return true;
-            
+
             // データ操作コマンド群
             if (processDataCommands(line))
                 return true;
-            
+
             // 通常の単語追加処理
             processWordAddition(line);
             return true;
@@ -195,74 +195,74 @@ class CommandInterface
             return true;
         }
     }
-    
+
     /**
      * 検索コマンドを処理する
      */
     private bool processSearchCommands(string line)
     {
         StopWatch sw;
-        
+
         // 完全一致検索
         auto exactMatch = matchFirst(line, exactRegex);
         if (!exactMatch.empty)
         {
             string key = exactMatch[2];
             writeln("完全一致結果:");
-            
+
             sw.start();
             auto results = searchEngine.searchExact(key);
             sw.stop();
-            
+
             resultDisplay.displaySearchResult(results);
             return true;
         }
-        
+
         // 前方一致検索
         auto preMatch = matchFirst(line, preRegex);
         if (!preMatch.empty)
         {
             string key = preMatch[2];
             writeln("前方一致結果:");
-            
+
             sw.start();
             auto results = searchEngine.searchPrefix(key);
             sw.stop();
-            
+
             resultDisplay.displaySearchResult(results);
             return true;
         }
-        
+
         // 後方一致検索
         auto sufMatch = matchFirst(line, sufRegex);
         if (!sufMatch.empty)
         {
             string key = sufMatch[2];
             writeln("後方一致結果:");
-            
+
             sw.start();
             auto results = searchEngine.searchSuffix(key);
             sw.stop();
-            
+
             resultDisplay.displaySearchResult(results);
             return true;
         }
-        
+
         // 部分一致検索
         auto subMatch = matchFirst(line, subRegex);
         if (!subMatch.empty)
         {
             string key = subMatch[2];
             writeln("部分一致結果:");
-            
+
             sw.start();
             auto results = searchEngine.searchSubstring(key);
             sw.stop();
-            
+
             resultDisplay.displaySearchResult(results);
             return true;
         }
-        
+
         // 類似検索
         auto simMatch = matchFirst(line, simRegex);
         if (!simMatch.empty)
@@ -270,18 +270,18 @@ class CommandInterface
             string query = simMatch[2];
             size_t maxDist = simMatch[3].empty ? 2 : to!size_t(simMatch[3]);
             writefln("類似検索結果（最大距離: %d）:", maxDist);
-            
+
             // 距離情報を常に明示的に含むクエリ文字列を作成
             string queryWithDistance = query ~ "," ~ to!string(maxDist);
-            
+
             sw.start();
             auto results = searchEngine.searchSimilar(queryWithDistance);
             sw.stop();
-            
+
             resultDisplay.displaySearchResult(results);
             return true;
         }
-        
+
         // 拡張類似検索
         auto simExtMatch = matchFirst(line, simExtendedRegex);
         if (!simExtMatch.empty)
@@ -289,82 +289,83 @@ class CommandInterface
             string query = simExtMatch[2];
             size_t maxDist = simExtMatch[3].empty ? 2 : to!size_t(simExtMatch[3]);
             writefln("拡張類似検索結果（最大距離: %d）:", maxDist);
-            
+
             // 距離情報を常に明示的に含むクエリ文字列を作成
             string queryWithDistance = query ~ "," ~ to!string(maxDist);
-            
+
             sw.start();
             auto results = searchEngine.searchSimilarExtended(queryWithDistance);
             sw.stop();
-            
+
             resultDisplay.displaySearchResult(results);
             return true;
         }
-        
+
         // 長さ検索（固定）
         auto lengthExactMatch = matchFirst(line, lengthExactRegex);
         if (!lengthExactMatch.empty)
         {
             size_t targetLength = to!size_t(lengthExactMatch[2]);
             writefln("長さ検索結果（%d文字の単語）:", targetLength);
-            
+
             sw.start();
             auto results = searchEngine.searchByLength(targetLength);
             sw.stop();
-            
+
             resultDisplay.displaySearchResult(results);
             return true;
         }
-        
+
         // 長さ検索（範囲）
         auto lengthRangeMatch = matchFirst(line, lengthRangeRegex);
         if (!lengthRangeMatch.empty)
         {
             size_t minLength = to!size_t(lengthRangeMatch[2]);
             size_t maxLength = to!size_t(lengthRangeMatch[3]);
-            
+
             if (minLength > maxLength)
             {
-                writeln("エラー: 長さの範囲指定が不正です（最小値 > 最大値）");
+                writeln(
+                    "エラー: 長さの範囲指定が不正です（最小値 > 最大値）");
                 return true;
             }
-            
+
             writefln("長さ検索結果（%d-%d文字の単語）:", minLength, maxLength);
-            
+
             sw.start();
             auto results = searchEngine.searchByLengthRange(minLength, maxLength);
             sw.stop();
-            
+
             resultDisplay.displaySearchResult(results);
             return true;
         }
-        
+
         // ID範囲検索
         auto idRangeMatch = matchFirst(line, idRangeRegex);
         if (!idRangeMatch.empty)
         {
             size_t minID = to!size_t(idRangeMatch[2]);
             size_t maxID = to!size_t(idRangeMatch[3]);
-            
+
             if (minID > maxID)
             {
                 writeln("エラー: IDの範囲指定が不正です（最小値 > 最大値）");
                 return true;
             }
-            
+
             writefln("ID範囲検索結果（ID: %d-%d）:", minID, maxID);
-            
+
             sw.start();
             auto results = searchEngine.searchByIDRange(minID, maxID);
             sw.stop();
-            
+
             resultDisplay.displaySearchResult(results);
             return true;
         }
-        
+
         return false; // 検索コマンドではない
     }
-    
+
     /**
      * データ操作コマンドを処理する
      */
@@ -378,7 +379,7 @@ class CommandInterface
             deleteWord(word);
             return true;
         }
-        
+
         // 復元コマンド
         auto undeleteMatch = matchFirst(line, undeleteRegex);
         if (!undeleteMatch.empty)
@@ -387,10 +388,10 @@ class CommandInterface
             undeleteWord(word);
             return true;
         }
-        
+
         return false; // データ操作コマンドではない
     }
-    
+
     /**
      * 単語追加処理
      */
@@ -398,15 +399,16 @@ class CommandInterface
     {
         // 複数の単語をスペースで区切って入力可能
         auto words = line.split();
-        
+
         foreach (word; words)
         {
             word = strip(word);
-            if (word.empty) continue;
-            
+            if (word.empty)
+                continue;
+
             // 文字列をインターン化
             string internedWord = internString(word);
-            
+
             if (internedWord in wordDict)
             {
                 auto entry = wordDict[internedWord];
@@ -416,37 +418,38 @@ class CommandInterface
                     entry.isDeleted = false;
                     wordDict[internedWord] = entry;
                     idDict[entry.id] = entry;
-                    
+
                     // CSVファイルを更新
                     csvProcessor.appendEntry(entry, csvFilePath);
-                    
+
                     writefln("単語 '%s' (ID: %d) を復元しました", internedWord, entry.id);
                 }
                 else
                 {
-                    writefln("単語 '%s' は既に存在します (ID: %d)", internedWord, entry.id);
+                    writefln("単語 '%s' は既に存在します (ID: %d)", internedWord, entry
+                            .id);
                 }
             }
             else
             {
                 // 新しい単語を追加
                 auto newEntry = WordEntry(internedWord, nextID, false);
-                
+
                 wordDict[internedWord] = newEntry;
                 idDict[nextID] = newEntry;
-                
+
                 // インデックスを更新
                 updateIndicesForNewWord(internedWord, nextID);
-                
+
                 // CSVファイルに追記
                 csvProcessor.appendEntry(newEntry, csvFilePath);
-                
+
                 writefln("新しい単語 '%s' (ID: %d) を追加しました", internedWord, nextID);
                 nextID++;
             }
         }
     }
-    
+
     /**
      * 新しい単語のためにインデックスを更新する
      */
@@ -454,15 +457,16 @@ class CommandInterface
     {
         // プレフィックス木に追加
         prefixTree.insert(word);
-        
+
         // サフィックス木に追加
         string revWord = revStr(word);
         suffixTree.insert(revWord);
-        
+
         // N-gramインデックスに追加
         import utils.search_utils : registerNGrams;
+
         registerNGrams(word, id, gramIndex);
-        
+
         // 長さインデックスに追加
         size_t len = word.length;
         if (len !in lengthIndex)
@@ -470,84 +474,85 @@ class CommandInterface
             lengthIndex[len] = null;
         }
         lengthIndex[len][id] = true;
-        
+
         // BK-Treeに追加
         bkTree.insert(word, id);
     }
-    
+
     /**
      * 単語を削除する
      */
     private void deleteWord(string word)
     {
         string internedWord = internString(word);
-        
+
         if (internedWord !in wordDict)
         {
             writefln("単語 '%s' が見つかりません", word);
             return;
         }
-        
+
         auto entry = wordDict[internedWord];
-        
+
         if (entry.isDeleted)
         {
             writefln("単語 '%s' (ID: %d) は既に削除されています", word, entry.id);
             return;
         }
-        
+
         // 論理削除を実行
         entry.isDeleted = true;
         wordDict[internedWord] = entry;
         idDict[entry.id] = entry;
-        
+
         // CSVファイルを更新
         csvProcessor.appendEntry(entry, csvFilePath);
-        
+
         writefln("単語 '%s' (ID: %d) を削除しました", word, entry.id);
     }
-    
+
     /**
      * 削除された単語を復元する
      */
     private void undeleteWord(string word)
     {
         string internedWord = internString(word);
-        
+
         if (internedWord !in wordDict)
         {
             writefln("単語 '%s' が見つかりません", word);
             return;
         }
-        
+
         auto entry = wordDict[internedWord];
-        
+
         if (!entry.isDeleted)
         {
             writefln("単語 '%s' (ID: %d) は削除されていません", word, entry.id);
             return;
         }
-        
+
         // 復元を実行
         entry.isDeleted = false;
         wordDict[internedWord] = entry;
         idDict[entry.id] = entry;
-        
+
         // CSVファイルを更新
         csvProcessor.appendEntry(entry, csvFilePath);
-        
+
         writefln("単語 '%s' (ID: %d) を復元しました", word, entry.id);
     }
-    
+
     /**
      * インデックスを再構築する
      */
     private void rebuildIndices()
     {
         writeln("インデックスを再構築しています...");
-        
+
         // 確認を求める
-        write("この操作にはしばらく時間がかかります。続行しますか？ (y/n): ");
+        write(
+            "この操作にはしばらく時間がかかります。続行しますか？ (y/n): ");
         stdout.flush();
         string confirm = strip(readln());
         if (confirm != "y" && confirm != "Y")
@@ -555,10 +560,11 @@ class CommandInterface
             writeln("インデックス再構築をキャンセルしました。");
             return;
         }
-        
+
         import core.data_manager;
+
         auto dataManager = new DataManager();
-        
+
         // 現在のデータからエントリ配列を作成
         WordEntry[] entries;
         entries.reserve(idDict.length);
@@ -566,54 +572,55 @@ class CommandInterface
         {
             entries ~= entry;
         }
-        
+
         // インデックスをクリア
         prefixTree.clear();
         suffixTree.clear();
         gramIndex.clear();
         lengthIndex.clear();
-        
+
         // インデックス再構築
         dataManager.buildFromEntries(
             entries, wordDict, idDict, prefixTree, suffixTree, gramIndex, lengthIndex, bkTree
         );
-        
+
         // SearchContextを再作成
         SearchContext newContext;
         newContext.wordDict = &wordDict;
         newContext.idDict = &idDict;
-        newContext.prefixTree = cast(void*)prefixTree;
-        newContext.suffixTree = cast(void*)suffixTree;
+        newContext.prefixTree = cast(void*) prefixTree;
+        newContext.suffixTree = cast(void*) suffixTree;
         newContext.gramIndex = cast(void*)&gramIndex;
         newContext.lengthIndex = cast(void*)&lengthIndex;
-        newContext.bkTree = cast(void*)bkTree;
-        
+        newContext.bkTree = cast(void*) bkTree;
+
         // 検索エンジンを更新
         searchEngine = new SearchEngine(newContext);
-        
+
         writeln("インデックスの再構築が完了しました！");
     }
-    
+
     /**
      * 統計情報を表示する
      */
     private void showStatistics()
     {
         import core.data_manager;
+
         auto dataManager = new DataManager();
-        
+
         dataManager.displayIndexStatistics(
             wordDict, idDict, prefixTree, suffixTree, gramIndex, lengthIndex, bkTree
         );
-        
+
         // CSV統計も表示
         auto csvStats = csvProcessor.getStatistics(csvFilePath);
         csvStats.display();
-        
+
         // メモリ統計
         reportGCStats();
     }
-    
+
     /**
      * ウェルカムメッセージを表示する
      */
@@ -625,7 +632,7 @@ class CommandInterface
         writeln("終了するには :exit を入力してください。");
         writeln("=====================================\n");
     }
-    
+
     /**
      * ヘルプメッセージを表示する
      */
@@ -641,18 +648,22 @@ class CommandInterface
         writeln("  :sub WORD, :substring WORD   部分一致検索（WORD を含む）");
         writeln("");
         writeln("論理演算検索:");
-        writeln("  :and KEY1 KEY2...            AND検索（すべてのキーワードを含む）");
-        writeln("  :or KEY1 KEY2...             OR検索（いずれかのキーワードを含む）");
+        writeln(
+            "  :and KEY1 KEY2...            AND検索（すべてのキーワードを含む）");
+        writeln(
+            "  :or KEY1 KEY2...             OR検索（いずれかのキーワードを含む）");
         writeln("  :not KEY                     NOT検索（キーワードを含まない）");
         writeln("");
         writeln("属性検索:");
         writeln("  :length N, :len N            特定の長さ(N文字)の単語を検索");
-        writeln("  :length N-M, :len N-M        特定の長さ範囲(N～M文字)の単語を検索");
+        writeln(
+            "  :length N-M, :len N-M        特定の長さ範囲(N～M文字)の単語を検索");
         writeln("  :id N-M, :ids N-M            ID範囲(N～M)の単語を検索");
         writeln("");
         writeln("類似検索:");
         writeln("  :sim WORD [d]                類似検索 (デフォルト距離d=2)");
-        writeln("  :sim+ WORD [d]               拡張類似検索 - より多くの結果を表示");
+        writeln(
+            "  :sim+ WORD [d]               拡張類似検索 - より多くの結果を表示");
         writeln("");
         writeln("データ管理:");
         writeln("  :delete WORD, :del WORD      単語を削除（論理削除）");
@@ -673,6 +684,4 @@ class CommandInterface
         writeln("  :exit コマンド、Ctrl+D、または Ctrl+C で終了できます");
         writeln("=====================================================\n");
     }
-} 
-
- 
+}

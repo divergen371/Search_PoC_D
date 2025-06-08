@@ -115,11 +115,12 @@ void initializeSystem()
     // シグナルハンドラを設定
     signal(SIGINT, &signalHandler);
     signal(SIGTERM, &signalHandler);
-    
+
     version (Posix)
     {
         // Unix系システムではSIGHUPとSIGQUITも処理
         import core.sys.posix.signal : SIGHUP, SIGQUIT;
+
         signal(SIGHUP, &signalHandler);
         signal(SIGQUIT, &signalHandler);
     }
@@ -143,11 +144,11 @@ void safeExit(int exitCode = 0)
 struct ExecutionTimer
 {
     import std.datetime.stopwatch : StopWatch;
-    
+
     private StopWatch stopwatch;
     private string timerName;
     private bool isRunning;
-    
+
     /**
      * タイマーを開始する
      * 
@@ -162,32 +163,34 @@ struct ExecutionTimer
         isRunning = true;
         writefln("%s を開始しました", name);
     }
-    
+
     /**
      * タイマーを停止し、結果を表示する
      */
     void stop()
     {
-        if (!isRunning) return;
-        
+        if (!isRunning)
+            return;
+
         stopwatch.stop();
         isRunning = false;
-        
+
         auto elapsed = stopwatch.peek();
         writefln("%s が完了しました: %.3f秒", timerName, elapsed.total!"msecs" / 1000.0);
     }
-    
+
     /**
      * 中間時間を表示する（タイマーは継続）
      */
     void lap(string message = "中間時間")
     {
-        if (!isRunning) return;
-        
+        if (!isRunning)
+            return;
+
         auto elapsed = stopwatch.peek();
         writefln("%s - %s: %.3f秒", timerName, message, elapsed.total!"msecs" / 1000.0);
     }
-    
+
     /**
      * 経過時間を秒で取得する
      * 
@@ -196,7 +199,8 @@ struct ExecutionTimer
      */
     double getElapsedSeconds()
     {
-        if (!isRunning) return 0.0;
+        if (!isRunning)
+            return 0.0;
         return stopwatch.peek().total!"msecs" / 1000.0;
     }
 }
@@ -211,7 +215,7 @@ struct ProcessInfo
     string[] commandLineArgs; /// コマンドライン引数
     ulong memoryUsage; /// メモリ使用量（バイト）
     double cpuUsage; /// CPU使用率（パーセント）
-    
+
     /**
      * プロセス情報を表示する
      */
@@ -242,10 +246,10 @@ ProcessInfo getCurrentProcessInfo()
     import std.process : thisProcessID;
     import std.file : thisExePath;
     import std.process : environment;
-    
+
     ProcessInfo info;
     info.processId = thisProcessID();
-    
+
     try
     {
         info.executablePath = thisExePath();
@@ -254,19 +258,21 @@ ProcessInfo getCurrentProcessInfo()
     {
         info.executablePath = "Unknown";
     }
-    
+
     // コマンドライン引数（簡易版）
     import std.process;
+
     info.commandLineArgs = ["Unknown"]; // 簡素化
-    
+
     // メモリ使用量（GCからの情報）
     import core.memory : GC;
+
     auto stats = GC.stats();
     info.memoryUsage = stats.usedSize;
-    
+
     // CPU使用率（ダミー値）
     info.cpuUsage = 0.0;
-    
+
     return info;
 }
 
@@ -288,9 +294,10 @@ class EnvironmentManager
     static string get(string name, string defaultValue = "")
     {
         import std.process : environment;
+
         return environment.get(name, defaultValue);
     }
-    
+
     /**
      * 環境変数を設定する
      * 
@@ -301,9 +308,10 @@ class EnvironmentManager
     static void set(string name, string value)
     {
         import std.process : environment;
+
         environment[name] = value;
     }
-    
+
     /**
      * 環境変数が存在するかチェックする
      * 
@@ -316,15 +324,17 @@ class EnvironmentManager
     static bool exists(string name)
     {
         import std.process : environment;
+
         return environment.get(name, null) !is null;
     }
-    
+
     /**
      * すべての環境変数を表示する
      */
     static void displayAll()
     {
         import std.process : environment;
+
         writeln("=== 環境変数一覧 ===");
         foreach (name, value; environment.toAA())
         {
@@ -341,7 +351,7 @@ class TemporaryDirectory
 {
     private string tempPath;
     private bool isCreated;
-    
+
     /**
      * コンストラクタ
      * 
@@ -354,11 +364,11 @@ class TemporaryDirectory
         import std.conv : to;
         import std.path : buildPath;
         import std.file : mkdirRecurse, tempDir;
-        
+
         auto randomNum = uniform(10_000, 99_999);
         auto dirName = prefix ~ "_" ~ randomNum.to!string;
         tempPath = buildPath(tempDir(), dirName);
-        
+
         try
         {
             mkdirRecurse(tempPath);
@@ -371,7 +381,7 @@ class TemporaryDirectory
             isCreated = false;
         }
     }
-    
+
     /**
      * デストラクタ
      */
@@ -379,7 +389,7 @@ class TemporaryDirectory
     {
         cleanup();
     }
-    
+
     /**
      * 一時ディレクトリのパスを取得する
      * 
@@ -390,7 +400,7 @@ class TemporaryDirectory
     {
         return tempPath;
     }
-    
+
     /**
      * 一時ディレクトリを削除する
      */
@@ -401,6 +411,7 @@ class TemporaryDirectory
             try
             {
                 import std.file : rmdirRecurse, exists;
+
                 if (exists(tempPath))
                 {
                     rmdirRecurse(tempPath);
@@ -414,6 +425,4 @@ class TemporaryDirectory
             }
         }
     }
-} 
-
- 
+}

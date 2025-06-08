@@ -16,7 +16,7 @@ import core.index_types : GramIndexType;
 struct IndexCache
 {
     string path; /// キャッシュファイルの絶対パス
-    
+
     /**
      * コンストラクタ
      * 
@@ -62,10 +62,10 @@ struct IndexCache
             auto file = File(path, "wb");
             scope (exit)
                 file.close();
-            
+
             // magic number
             file.rawWrite(cast(const(ubyte[])) "LTC1");
-            
+
             // prefix tree
             writeValue!uint(file, cast(uint) prefix.length);
             foreach (word; prefix)
@@ -74,7 +74,7 @@ struct IndexCache
                 writeValue!ushort(file, len);
                 file.rawWrite(cast(const(ubyte[])) word);
             }
-            
+
             // suffix tree
             writeValue!uint(file, cast(uint) suffix.length);
             foreach (word; suffix)
@@ -87,6 +87,7 @@ struct IndexCache
         catch (Exception e)
         {
             import std.stdio : writeln;
+
             writeln("キャッシュ保存中にエラーが発生しました: ", e.msg);
         }
     }
@@ -107,16 +108,16 @@ struct IndexCache
         {
             if (!exists(path))
                 return false;
-                
+
             auto file = File(path, "rb");
             scope (exit)
                 file.close();
-                
+
             ubyte[4] magic;
             file.rawRead(magic[]);
             if (magic != cast(ubyte[4]) "LTC1")
                 return false;
-            
+
             uint preCount;
             readValue!uint(file, preCount);
             prefix = new RedBlackTree!string;
@@ -129,7 +130,7 @@ struct IndexCache
                 file.rawRead(cast(ubyte[]) buf);
                 prefix.insert(cast(string) buf.idup);
             }
-            
+
             uint sufCount;
             readValue!uint(file, sufCount);
             suffix = new RedBlackTree!string;
@@ -142,12 +143,13 @@ struct IndexCache
                 file.rawRead(cast(ubyte[]) buf);
                 suffix.insert(cast(string) buf.idup);
             }
-            
+
             return true;
         }
         catch (Exception e)
         {
             import std.stdio : writeln;
+
             writeln("キャッシュ読み込み中にエラーが発生しました: ", e.msg);
             return false;
         }
@@ -173,7 +175,7 @@ struct IndexCache
             auto file = File(path, "wb");
             scope (exit)
                 file.close();
-                
+
             file.rawWrite(cast(ubyte[]) "LTC2"); // 新しいmagic
 
             // prefix / suffix 既存ロジック
@@ -220,6 +222,7 @@ struct IndexCache
         catch (Exception e)
         {
             import std.stdio : writeln;
+
             writeln("拡張キャッシュ保存中にエラーが発生しました: ", e.msg);
         }
     }
@@ -245,11 +248,11 @@ struct IndexCache
         {
             if (!exists(path))
                 return false;
-                
+
             auto file = File(path, "rb");
             scope (exit)
                 file.close();
-                
+
             ubyte[4] mag;
             file.rawRead(mag[]);
             if (mag != cast(ubyte[4]) "LTC2")
@@ -329,11 +332,13 @@ struct IndexCache
         catch (Exception e)
         {
             import std.stdio : writeln;
-            writeln("拡張キャッシュ読み込み中にエラーが発生しました: ", e.msg);
+
+            writeln("拡張キャッシュ読み込み中にエラーが発生しました: ", e
+                    .msg);
             return false;
         }
     }
-    
+
     /**
      * キャッシュファイルを削除する
      * 
@@ -354,11 +359,13 @@ struct IndexCache
         catch (Exception e)
         {
             import std.stdio : writeln;
-            writeln("キャッシュファイル削除中にエラーが発生しました: ", e.msg);
+
+            writeln("キャッシュファイル削除中にエラーが発生しました: ", e
+                    .msg);
             return false;
         }
     }
-    
+
     /**
      * キャッシュファイルのサイズを取得する（バイト）
      * 
@@ -378,14 +385,14 @@ struct IndexCache
             return 0;
         }
     }
-    
+
     /**
      * キャッシュの統計情報を表示する
      */
     void displayStats()
     {
         import std.stdio : writefln;
-        
+
         writeln("=== キャッシュ統計 ===");
         writefln("パス: %s", path);
         writefln("存在: %s", exists(path) ? "Yes" : "No");
@@ -449,7 +456,7 @@ private void readValue(T)(File f, ref T v)
 class CacheManager
 {
     private IndexCache[string] caches;
-    
+
     /**
      * キャッシュを追加する
      * 
@@ -461,7 +468,7 @@ class CacheManager
     {
         caches[name] = IndexCache(path);
     }
-    
+
     /**
      * 指定した名前のキャッシュを取得する
      * 
@@ -477,7 +484,7 @@ class CacheManager
             return &caches[name];
         return null;
     }
-    
+
     /**
      * すべてのキャッシュファイルを削除する
      */
@@ -488,14 +495,14 @@ class CacheManager
             cache.remove();
         }
     }
-    
+
     /**
      * キャッシュの統計情報を表示する
      */
     void displayAllStats()
     {
         import std.stdio : writeln;
-        
+
         writeln("=== 全キャッシュ統計 ===");
         foreach (name, ref cache; caches)
         {
@@ -505,6 +512,4 @@ class CacheManager
         }
         writeln("====================");
     }
-} 
-
- 
+}

@@ -26,21 +26,21 @@ class LanguageTableApplication
     private WordEntry[string] wordDict;
     private WordEntry[size_t] idDict;
     private size_t nextID;
-    
+
     // インデックス構造
     private RedBlackTree!string prefixTree;
     private RedBlackTree!string suffixTree;
     private GramIndexType[string] gramIndex;
     private bool[size_t][size_t] lengthIndex;
     private BKTree bkTree;
-    
+
     // キャッシュ
     private IndexCache cache;
     private bool cacheLoaded;
-    
+
     // 統計
     private StopWatch totalTimer;
-    
+
     /**
      * コンストラクタ
      */
@@ -48,44 +48,45 @@ class LanguageTableApplication
     {
         // システム初期化
         initializeSystem();
-        
+
         // CSVファイルパスの設定
         csvFilePath = absolutePath("language_data.csv");
-        
+
         // 初期化
         nextID = 0;
         cacheLoaded = false;
-        
+
         // キャッシュの初期化
         string cachePath = csvFilePath ~ ".cache";
         cache = IndexCache(cachePath);
-        
+
         // インデックスの初期化
         prefixTree = new RedBlackTree!string;
         suffixTree = new RedBlackTree!string;
-        
+
         writeln("Language Table Application を初期化しました");
         writeln("CSVファイルの出力先: ", csvFilePath);
     }
-    
+
     /**
      * アプリケーションを開始する
      */
     void run()
     {
         totalTimer.start();
-        
+
         try
         {
             // データの読み込み
             loadData();
-            
+
             // インタラクティブモードの開始
             startInteractiveMode();
         }
         catch (Exception e)
         {
-            writefln("アプリケーション実行中にエラーが発生しました: %s", e.msg);
+            writefln("アプリケーション実行中にエラーが発生しました: %s", e
+                    .msg);
             safeExit(1);
         }
         finally
@@ -93,7 +94,7 @@ class LanguageTableApplication
             cleanup();
         }
     }
-    
+
     /**
      * データの読み込みを行う
      */
@@ -109,7 +110,7 @@ class LanguageTableApplication
                 return;
             }
         }
-        
+
         // CSVファイルからの読み込み
         if (exists(csvFilePath))
         {
@@ -121,7 +122,7 @@ class LanguageTableApplication
             initializeEmptyDatabase();
         }
     }
-    
+
     /**
      * キャッシュからデータを読み込む
      */
@@ -132,13 +133,15 @@ class LanguageTableApplication
             if (cache.loadFull(prefixTree, suffixTree, gramIndex, lengthIndex))
             {
                 cacheLoaded = true;
-                writeln("prefix/suffix/gram/length インデックスをキャッシュから復元");
+                writeln(
+                    "prefix/suffix/gram/length インデックスをキャッシュから復元");
                 return true;
             }
             else if (cache.load(prefixTree, suffixTree))
             {
                 cacheLoaded = true;
-                writeln("prefix/suffix インデックスをキャッシュから復元（旧形式）");
+                writeln(
+                    "prefix/suffix インデックスをキャッシュから復元（旧形式）");
                 return true;
             }
         }
@@ -146,26 +149,26 @@ class LanguageTableApplication
         {
             writefln("キャッシュ読み込みエラー: %s", e.msg);
         }
-        
+
         return false;
     }
-    
+
     /**
      * CSVファイルからデータを読み込む
      */
     private void loadFromCSV()
     {
         import io.csv_processor;
-        
+
         writeln("既存のCSVファイルを読み込んでいます...");
-        
+
         auto processor = new CSVProcessor();
         auto entries = processor.loadEntries(csvFilePath);
-        
+
         if (entries.length > 0)
         {
             buildDatabaseFromEntries(entries);
-            
+
             // キャッシュ保存
             if (!cacheLoaded)
             {
@@ -173,49 +176,49 @@ class LanguageTableApplication
             }
         }
     }
-    
+
     /**
      * エントリからデータベースを構築する
      */
     private void buildDatabaseFromEntries(WordEntry[] entries)
     {
         import core.data_manager;
-        
+
         auto dataManager = new DataManager();
         dataManager.buildFromEntries(
             entries,
             wordDict,
-            idDict, 
+            idDict,
             prefixTree,
             suffixTree,
             gramIndex,
             lengthIndex,
             bkTree
         );
-        
+
         // 次のIDを設定
         foreach (entry; entries)
         {
             if (entry.id >= nextID)
                 nextID = entry.id + 1;
         }
-        
+
         reportMemoryUsage("データベース構築後");
     }
-    
+
     /**
      * 空のデータベースを初期化する
      */
     private void initializeEmptyDatabase()
     {
         import algorithms.distance : damerauDistanceLimited;
-        
+
         bkTree = new BKTree(&damerauDistanceLimited, 10);
         nextID = 0;
-        
+
         writeln("空のデータベースを初期化しました");
     }
-    
+
     /**
      * キャッシュにデータを保存する
      */
@@ -232,14 +235,14 @@ class LanguageTableApplication
             writefln("キャッシュ保存エラー: %s", e.msg);
         }
     }
-    
+
     /**
      * インタラクティブモードを開始する
      */
     private void startInteractiveMode()
     {
         import ui.command_interface;
-        
+
         auto commandInterface = new CommandInterface(
             wordDict,
             idDict,
@@ -251,23 +254,23 @@ class LanguageTableApplication
             bkTree,
             csvFilePath
         );
-        
+
         commandInterface.run();
     }
-    
+
     /**
      * インデックスを再構築する
      */
     void rebuildIndexes()
     {
         writeln("インデックスを再構築しています...");
-        
+
         // インデックスをクリア
         prefixTree.clear();
         suffixTree.clear();
         gramIndex.clear();
         lengthIndex.clear();
-        
+
         // CSVファイルから再読み込み
         if (exists(csvFilePath))
         {
@@ -279,7 +282,7 @@ class LanguageTableApplication
             writeln("エラー: CSVファイルが見つかりません。");
         }
     }
-    
+
     /**
      * 統計情報を表示する
      */
@@ -294,22 +297,22 @@ class LanguageTableApplication
         writefln("サフィックス木サイズ: %d", suffixTree.length);
         writefln("N-gramインデックス数: %d", gramIndex.length);
         writefln("長さインデックス数: %d", lengthIndex.length);
-        
+
         if (bkTree !is null)
         {
             bkTree.printStats();
         }
-        
+
         if (totalTimer.running)
         {
             auto elapsed = totalTimer.peek();
             writefln("総実行時間: %.3f秒", elapsed.total!"msecs" / 1000.0);
         }
-        
+
         reportGCStats();
         writeln("=========================\n");
     }
-    
+
     /**
      * 有効な単語数をカウントする
      */
@@ -323,7 +326,7 @@ class LanguageTableApplication
         }
         return count;
     }
-    
+
     /**
      * アプリケーションを終了する
      */
@@ -331,25 +334,58 @@ class LanguageTableApplication
     {
         if (totalTimer.running)
             totalTimer.stop();
-        
+
         displayStatistics();
         cleanup();
         writeln("Language Table Application を終了しました");
     }
-    
+
     /**
      * getter メソッド群
      */
-    
-    string getCSVFilePath() const { return csvFilePath; }
-    WordEntry[string] getWordDict() { return wordDict; }
-    WordEntry[size_t] getIdDict() { return idDict; }
-    size_t getNextID() const { return nextID; }
-    RedBlackTree!string getPrefixTree() { return prefixTree; }
-    RedBlackTree!string getSuffixTree() { return suffixTree; }
-    GramIndexType[string] getGramIndex() { return gramIndex; }
-    bool[size_t][size_t] getLengthIndex() { return lengthIndex; }
-    BKTree getBKTree() { return bkTree; }
-} 
 
- 
+    string getCSVFilePath() const
+    {
+        return csvFilePath;
+    }
+
+    WordEntry[string] getWordDict()
+    {
+        return wordDict;
+    }
+
+    WordEntry[size_t] getIdDict()
+    {
+        return idDict;
+    }
+
+    size_t getNextID() const
+    {
+        return nextID;
+    }
+
+    RedBlackTree!string getPrefixTree()
+    {
+        return prefixTree;
+    }
+
+    RedBlackTree!string getSuffixTree()
+    {
+        return suffixTree;
+    }
+
+    GramIndexType[string] getGramIndex()
+    {
+        return gramIndex;
+    }
+
+    bool[size_t][size_t] getLengthIndex()
+    {
+        return lengthIndex;
+    }
+
+    BKTree getBKTree()
+    {
+        return bkTree;
+    }
+}

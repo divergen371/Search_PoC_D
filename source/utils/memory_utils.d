@@ -59,7 +59,7 @@ struct MemoryStatistics
     size_t collectionsTotal; /// 総コレクション回数
     size_t collectionsFullTotal; /// フルコレクション回数
     ulong allocationStatsTypeName; /// 割り当て統計
-    
+
     /**
      * 統計情報を表示する
      */
@@ -67,17 +67,17 @@ struct MemoryStatistics
     {
         writeln("=== メモリ統計情報 ===");
         writefln("総容量: %.2f MB", totalSize / (1024.0 * 1024.0));
-        writefln("使用中: %.2f MB (%.1f%%)", 
-                usedSize / (1024.0 * 1024.0),
-                (usedSize * 100.0) / totalSize);
-        writefln("空き: %.2f MB (%.1f%%)", 
-                freeSize / (1024.0 * 1024.0),
-                (freeSize * 100.0) / totalSize);
+        writefln("使用中: %.2f MB (%.1f%%)",
+            usedSize / (1024.0 * 1024.0),
+            (usedSize * 100.0) / totalSize);
+        writefln("空き: %.2f MB (%.1f%%)",
+            freeSize / (1024.0 * 1024.0),
+            (freeSize * 100.0) / totalSize);
         writefln("コレクション回数: %d", collectionsTotal);
         writefln("フルコレクション回数: %d", collectionsFullTotal);
         writeln("==================");
     }
-    
+
     /**
      * 使用率を取得する（パーセント）
      */
@@ -96,17 +96,17 @@ struct MemoryStatistics
 MemoryStatistics getMemoryStatistics()
 {
     GC.collect(); // 正確な統計のためにGCを実行
-    
+
     auto stats = GC.stats();
     auto profileStats = GC.profileStats();
-    
+
     MemoryStatistics memStats;
     memStats.totalSize = stats.usedSize + stats.freeSize;
     memStats.usedSize = stats.usedSize;
     memStats.freeSize = stats.freeSize;
     memStats.collectionsTotal = profileStats.numCollections;
     memStats.collectionsFullTotal = profileStats.totalCollectionTime.total!"msecs";
-    
+
     return memStats;
 }
 
@@ -121,7 +121,7 @@ class MemoryMonitor
     private double criticalThreshold; /// 危険閾値（パーセント）
     private bool lastWasWarning; /// 前回警告を発したか
     private bool lastWasCritical; /// 前回危険警告を発したか
-    
+
     /**
      * コンストラクタ
      * 
@@ -136,7 +136,7 @@ class MemoryMonitor
         this.lastWasWarning = false;
         this.lastWasCritical = false;
     }
-    
+
     /**
      * メモリ使用量をチェックし、必要に応じて警告を表示する
      */
@@ -144,7 +144,7 @@ class MemoryMonitor
     {
         auto stats = getMemoryStatistics();
         double usage = stats.getUsagePercentage();
-        
+
         if (usage >= criticalThreshold && !lastWasCritical)
         {
             writefln("⚠️ 危険: メモリ使用量が%.1f%%に達しました！", usage);
@@ -164,7 +164,7 @@ class MemoryMonitor
             lastWasCritical = false;
         }
     }
-    
+
     /**
      * 強制的にガベージコレクションを実行する
      */
@@ -174,7 +174,7 @@ class MemoryMonitor
         auto beforeStats = getMemoryStatistics();
         GC.collect();
         auto afterStats = getMemoryStatistics();
-        
+
         auto freedMemory = beforeStats.usedSize - afterStats.usedSize;
         writefln("%.2f MB のメモリが解放されました", freedMemory / (1024.0 * 1024.0));
     }
@@ -187,7 +187,7 @@ struct MemoryBenchmark
 {
     private MemoryStatistics startStats;
     private string benchmarkName;
-    
+
     /**
      * ベンチマークを開始する
      * 
@@ -201,7 +201,7 @@ struct MemoryBenchmark
         startStats = getMemoryStatistics();
         writefln("メモリベンチマーク開始: %s", name);
     }
-    
+
     /**
      * ベンチマークを終了し、結果を表示する
      */
@@ -209,10 +209,10 @@ struct MemoryBenchmark
     {
         GC.collect(); // 終了前にGCを実行
         auto endStats = getMemoryStatistics();
-        
-        auto memoryDiff = cast(long)endStats.usedSize - cast(long)startStats.usedSize;
+
+        auto memoryDiff = cast(long) endStats.usedSize - cast(long) startStats.usedSize;
         auto gcDiff = endStats.collectionsTotal - startStats.collectionsTotal;
-        
+
         writefln("メモリベンチマーク終了: %s", benchmarkName);
         writefln("  メモリ変化: %+.2f MB", memoryDiff / (1024.0 * 1024.0));
         writefln("  GC実行回数: %d回", gcDiff);
@@ -229,7 +229,7 @@ struct MemoryPoolStats
     size_t usedEntries; /// 使用済みエントリ数
     size_t freeEntries; /// 空きエントリ数
     double utilizationRate; /// 使用率
-    
+
     /**
      * 統計情報を表示する
      */
@@ -253,7 +253,7 @@ struct SystemMemoryInfo
     ulong availablePhysicalMemory; /// 利用可能物理メモリ
     ulong totalVirtualMemory; /// 総仮想メモリ
     ulong availableVirtualMemory; /// 利用可能仮想メモリ
-    
+
     /**
      * システムメモリ情報を表示する
      */
@@ -261,9 +261,11 @@ struct SystemMemoryInfo
     {
         writeln("=== システムメモリ情報 ===");
         writefln("総物理メモリ: %.2f GB", totalPhysicalMemory / (1024.0 * 1024.0 * 1024.0));
-        writefln("利用可能物理メモリ: %.2f GB", availablePhysicalMemory / (1024.0 * 1024.0 * 1024.0));
+        writefln("利用可能物理メモリ: %.2f GB", availablePhysicalMemory / (
+                1024.0 * 1024.0 * 1024.0));
         writefln("総仮想メモリ: %.2f GB", totalVirtualMemory / (1024.0 * 1024.0 * 1024.0));
-        writefln("利用可能仮想メモリ: %.2f GB", availableVirtualMemory / (1024.0 * 1024.0 * 1024.0));
+        writefln("利用可能仮想メモリ: %.2f GB", availableVirtualMemory / (
+                1024.0 * 1024.0 * 1024.0));
         writeln("========================");
     }
 }
@@ -277,7 +279,7 @@ struct SystemMemoryInfo
 SystemMemoryInfo getSystemMemoryInfo()
 {
     SystemMemoryInfo info;
-    
+
     version (Windows)
     {
         // Windows specific implementation would go here
@@ -293,7 +295,7 @@ SystemMemoryInfo getSystemMemoryInfo()
         import std.process : executeShell;
         import std.conv : to;
         import std.string : strip;
-        
+
         try
         {
             // 簡易実装（/proc/meminfoを読む）
@@ -303,7 +305,7 @@ SystemMemoryInfo getSystemMemoryInfo()
                 auto totalKB = result.output.strip().to!ulong;
                 info.totalPhysicalMemory = totalKB * 1024;
             }
-            
+
             result = executeShell("cat /proc/meminfo | grep MemAvailable | awk '{print $2}'");
             if (result.status == 0)
             {
@@ -317,7 +319,7 @@ SystemMemoryInfo getSystemMemoryInfo()
             info.totalPhysicalMemory = 8UL * 1024 * 1024 * 1024;
             info.availablePhysicalMemory = 4UL * 1024 * 1024 * 1024;
         }
-        
+
         // 仮想メモリ情報（簡易版）
         info.totalVirtualMemory = info.totalPhysicalMemory * 2;
         info.availableVirtualMemory = info.availablePhysicalMemory * 2;
@@ -330,8 +332,6 @@ SystemMemoryInfo getSystemMemoryInfo()
         info.totalVirtualMemory = 16UL * 1024 * 1024 * 1024;
         info.availableVirtualMemory = 8UL * 1024 * 1024 * 1024;
     }
-    
-    return info;
-} 
 
- 
+    return info;
+}

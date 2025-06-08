@@ -11,7 +11,7 @@ struct WordEntry
     string word; /// 単語
     size_t id; /// ID
     bool isDeleted; /// 削除フラグ
-    
+
     /**
      * エントリが有効（削除されていない）かを確認する
      * 
@@ -22,7 +22,7 @@ struct WordEntry
     {
         return !isDeleted;
     }
-    
+
     /**
      * 文字列表現を取得する
      * 
@@ -32,6 +32,7 @@ struct WordEntry
     string toString() const
     {
         import std.format : format;
+
         return format("WordEntry(id: %d, word: \"%s\", deleted: %s)", id, word, isDeleted);
     }
 }
@@ -47,14 +48,14 @@ struct WordStatistics
     size_t averageLength; /// 平均文字数
     size_t minLength; /// 最短文字数
     size_t maxLength; /// 最長文字数
-    
+
     /**
      * 統計情報をまとめて表示する
      */
     void display() const
     {
         import std.stdio : writefln;
-        
+
         writefln("=== 単語統計情報 ===");
         writefln("総単語数: %d", totalWords);
         writefln("有効単語数: %d", activeWords);
@@ -71,16 +72,16 @@ struct WordStatistics
  */
 enum SearchMode
 {
-    Exact,      /// 完全一致
-    Prefix,     /// 前方一致
-    Suffix,     /// 後方一致
-    Substring,  /// 部分一致
+    Exact, /// 完全一致
+    Prefix, /// 前方一致
+    Suffix, /// 後方一致
+    Substring, /// 部分一致
     Similarity, /// 類似検索
-    AND,        /// AND検索
-    OR,         /// OR検索
-    NOT,        /// NOT検索
-    Length,     /// 長さ検索
-    IDRange     /// ID範囲検索
+    AND, /// AND検索
+    OR, /// OR検索
+    NOT, /// NOT検索
+    Length, /// 長さ検索
+    IDRange /// ID範囲検索
 }
 
 /**
@@ -88,10 +89,8 @@ enum SearchMode
  */
 enum SortOrder
 {
-    ID,         /// ID順
-    Word,       /// 単語順
-    Length,     /// 文字数順
-    Similarity  /// 類似度順
-} 
-
- 
+    ID, /// ID順
+    Word, /// 単語順
+    Length, /// 文字数順
+    Similarity /// 類似度順
+}

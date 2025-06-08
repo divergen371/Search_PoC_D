@@ -73,12 +73,12 @@ size_t countLines(string filePath)
 {
     auto file = File(filePath, "r");
     size_t lineCount = 0;
-    
+
     foreach (line; file.byLine())
     {
         lineCount++;
     }
-    
+
     return lineCount;
 }
 
@@ -95,7 +95,7 @@ struct FileStatistics
     double averageLineLength; /// 平均行長
     size_t maxLineLength; /// 最大行長
     size_t minLineLength; /// 最小行長
-    
+
     /**
      * 統計情報を表示する
      */
@@ -129,40 +129,41 @@ FileStatistics analyzeFile(string filePath)
     stats.filePath = filePath;
     stats.fileSize = getSize(filePath);
     stats.minLineLength = size_t.max;
-    
+
     auto file = File(filePath, "r");
-    
+
     foreach (line; file.byLine())
     {
         stats.lineCount++;
         size_t lineLength = line.length;
         stats.characterCount += lineLength;
-        
+
         // 単語数をカウント（簡易版：空白で区切られた要素数）
         import std.algorithm : splitter;
         import std.ascii : isWhite;
+
         auto words = line.splitter!(c => isWhite(c));
         foreach (word; words)
         {
             if (word.length > 0)
                 stats.wordCount++;
         }
-        
+
         // 行長の統計
         if (lineLength > stats.maxLineLength)
             stats.maxLineLength = lineLength;
         if (lineLength < stats.minLineLength)
             stats.minLineLength = lineLength;
     }
-    
+
     // 平均行長を計算
     if (stats.lineCount > 0)
-        stats.averageLineLength = cast(double)stats.characterCount / stats.lineCount;
-    
+        stats.averageLineLength = cast(double) stats.characterCount / stats.lineCount;
+
     // 最小行長の調整（空ファイルの場合）
     if (stats.minLineLength == size_t.max)
         stats.minLineLength = 0;
-    
+
     return stats;
 }
 
@@ -184,12 +185,12 @@ bool validateCSVFormat(string filePath, size_t expectedColumns = 0)
         bool firstLine = true;
         size_t detectedColumns = 0;
         size_t lineNumber = 0;
-        
+
         foreach (line; file.byLine())
         {
             lineNumber++;
             auto parts = line.split(",");
-            
+
             if (firstLine)
             {
                 detectedColumns = parts.length;
@@ -197,19 +198,19 @@ bool validateCSVFormat(string filePath, size_t expectedColumns = 0)
                     expectedColumns = detectedColumns;
                 firstLine = false;
             }
-            
+
             if (parts.length != expectedColumns)
             {
-                writefln("CSV形式エラー: 行 %d で列数が不正です（期待: %d, 実際: %d）", 
-                         lineNumber, expectedColumns, parts.length);
+                writefln("CSV形式エラー: 行 %d で列数が不正です（期待: %d, 実際: %d）",
+                    lineNumber, expectedColumns, parts.length);
                 return false;
             }
-            
+
             // 最初の数行だけチェック（大きなファイルの場合）
             if (lineNumber > 100)
                 break;
         }
-        
+
         return true;
     }
     catch (Exception e)
@@ -233,7 +234,7 @@ string detectEncoding(string filePath)
     auto file = File(filePath, "rb");
     ubyte[4] bom;
     auto bytesRead = file.rawRead(bom).length;
-    
+
     // BOMによる判定
     if (bytesRead >= 3 && bom[0] == 0xEF && bom[1] == 0xBB && bom[2] == 0xBF)
         return "UTF-8 with BOM";
@@ -245,12 +246,12 @@ string detectEncoding(string filePath)
         return "UTF-16 LE";
     if (bytesRead >= 2 && bom[0] == 0xFE && bom[1] == 0xFF)
         return "UTF-16 BE";
-    
+
     // 内容による簡易判定（ASCII/UTF-8）
     file.rewind();
     ubyte[1024] buffer;
     auto readBytes = file.rawRead(buffer).length;
-    
+
     bool hasNonASCII = false;
     foreach (b; buffer[0 .. readBytes])
     {
@@ -260,7 +261,7 @@ string detectEncoding(string filePath)
             break;
         }
     }
-    
+
     return hasNonASCII ? "UTF-8" : "ASCII";
 }
 
@@ -279,20 +280,21 @@ string generateTempFilePath(string prefix = "temp", string suffix = ".tmp")
     import std.random : uniform;
     import std.conv : to;
     import std.path : buildPath;
-    
+
     auto randomNum = uniform(10_000, 99_999);
     auto tempFileName = prefix ~ "_" ~ randomNum.to!string ~ suffix;
-    
+
     version (Windows)
     {
         import std.process : environment;
+
         auto tempDir = environment.get("TEMP", "C:\\Windows\\Temp");
     }
     else
     {
         auto tempDir = "/tmp";
     }
-    
+
     return buildPath(tempDir, tempFileName);
 }
 
@@ -311,14 +313,14 @@ string createBackup(string originalPath, string backupSuffix = ".bak")
     import std.path : setExtension;
     import std.datetime : Clock;
     import std.format : format;
-    
+
     auto timestamp = Clock.currTime();
     auto backupPath = format("%s_%04d%02d%02d_%02d%02d%02d%s",
-                           originalPath,
-                           timestamp.year, timestamp.month, timestamp.day,
-                           timestamp.hour, timestamp.minute, timestamp.second,
-                           backupSuffix);
-    
+        originalPath,
+        timestamp.year, timestamp.month, timestamp.day,
+        timestamp.hour, timestamp.minute, timestamp.second,
+        backupSuffix);
+
     copy(originalPath, backupPath);
     return backupPath;
 }
@@ -335,10 +337,10 @@ string createBackup(string originalPath, string backupSuffix = ".bak")
 ulong calculateDirectorySize(string dirPath)
 {
     ulong totalSize = 0;
-    
+
     if (!exists(dirPath) || !isDir(dirPath))
         return 0;
-    
+
     try
     {
         foreach (DirEntry entry; dirEntries(dirPath, SpanMode.depth))
@@ -351,7 +353,7 @@ ulong calculateDirectorySize(string dirPath)
     {
         writefln("ディレクトリサイズ計算エラー: %s", e.msg);
     }
-    
+
     return totalSize;
 }
 
@@ -370,7 +372,7 @@ bool isFileReadable(string filePath)
     {
         if (!exists(filePath) || !isFile(filePath))
             return false;
-        
+
         auto file = File(filePath, "r");
         file.close();
         return true;
@@ -398,10 +400,11 @@ bool isFileWritable(string filePath)
         if (!exists(filePath))
         {
             import std.path : dirName;
+
             auto parentDir = dirName(filePath);
             return exists(parentDir) && isDir(parentDir);
         }
-        
+
         auto file = File(filePath, "a");
         file.close();
         return true;
@@ -410,6 +413,4 @@ bool isFileWritable(string filePath)
     {
         return false;
     }
-} 
-
- 
+}

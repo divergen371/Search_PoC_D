@@ -89,17 +89,18 @@ void clearStringPool()
 void displayStringPoolStats()
 {
     import std.stdio : writefln;
-    
+
     size_t totalLength = 0;
     foreach (str; stringPool.values)
     {
         totalLength += str.length;
     }
-    
+
     writefln("=== 文字列プール統計 ===");
     writefln("プール内文字列数: %d", stringPool.length);
     writefln("総文字数: %d", totalLength);
-    writefln("平均文字数: %.2f", stringPool.length > 0 ? cast(double)totalLength / stringPool.length : 0.0);
+    writefln("平均文字数: %.2f", stringPool.length > 0 ? cast(double) totalLength / stringPool.length
+            : 0.0);
     writefln("=====================");
 }
 
@@ -116,12 +117,12 @@ string capitalize(string s)
 {
     if (s.length == 0)
         return s;
-    
+
     import std.ascii : toUpper, toLower;
-    
+
     char[] result = s.dup;
     result[0] = toUpper(result[0]);
-    
+
     return cast(string) result;
 }
 
@@ -137,13 +138,13 @@ string capitalize(string s)
 string toLowerString(string s)
 {
     import std.ascii : toLower;
-    
+
     char[] result = new char[s.length];
     foreach (i, char c; s)
     {
         result[i] = toLower(c);
     }
-    
+
     return cast(string) result;
 }
 
@@ -159,13 +160,13 @@ string toLowerString(string s)
 string toUpperString(string s)
 {
     import std.ascii : toUpper;
-    
+
     char[] result = new char[s.length];
     foreach (i, char c; s)
     {
         result[i] = toUpper(c);
     }
-    
+
     return cast(string) result;
 }
 
@@ -181,21 +182,21 @@ string toUpperString(string s)
 string trimString(string s)
 {
     import std.ascii : isWhite;
-    
+
     if (s.length == 0)
         return s;
-    
+
     size_t start = 0;
     size_t end = s.length;
-    
+
     // 先頭の空白をスキップ
     while (start < end && isWhite(s[start]))
         start++;
-    
+
     // 末尾の空白をスキップ
     while (end > start && isWhite(s[end - 1]))
         end--;
-    
+
     return s[start .. end];
 }
 
@@ -211,16 +212,16 @@ string trimString(string s)
 bool isNumericString(string s)
 {
     import std.ascii : isDigit;
-    
+
     if (s.length == 0)
         return false;
-    
+
     foreach (char c; s)
     {
         if (!isDigit(c))
             return false;
     }
-    
+
     return true;
 }
 
@@ -236,16 +237,16 @@ bool isNumericString(string s)
 bool isAlphaString(string s)
 {
     import std.ascii : isAlpha;
-    
+
     if (s.length == 0)
         return false;
-    
+
     foreach (char c; s)
     {
         if (!isAlpha(c))
             return false;
     }
-    
+
     return true;
 }
 
@@ -261,17 +262,15 @@ bool isAlphaString(string s)
 bool isAlphaNumericString(string s)
 {
     import std.ascii : isAlphaNum;
-    
+
     if (s.length == 0)
         return false;
-    
+
     foreach (char c; s)
     {
         if (!isAlphaNum(c))
             return false;
     }
-    
-    return true;
-} 
 
- 
+    return true;
+}

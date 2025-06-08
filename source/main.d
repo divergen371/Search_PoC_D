@@ -13,12 +13,12 @@ void main()
 {
     writeln("Language Table Application - リファクタリング版");
     writeln("==============================================");
-    
+
     try
     {
         // アプリケーションインスタンスを作成
         auto app = new LanguageTableApplication();
-        
+
         // アプリケーションを実行
         app.run();
     }
@@ -26,6 +26,7 @@ void main()
     {
         writefln("アプリケーション実行中にエラーが発生しました: %s", e.msg);
         import utils.system_utils : safeExit;
+
         safeExit(1);
     }
 }
@@ -38,6 +39,4 @@ void main()
 void language_table()
 {
     main();
-} 
-
- 
+}

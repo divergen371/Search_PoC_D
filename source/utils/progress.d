@@ -174,7 +174,7 @@ struct ProgressTracker
         return (elapsedSecs > 0) ? (cast(double) current / elapsedSecs) : 0.0;
     }
 
-    private:
+private:
 
     /**
      * 進捗状況を表示する
@@ -346,6 +346,4 @@ class ProgressManager
         }
         writeln("=================");
     }
-} 
-
- 
+}

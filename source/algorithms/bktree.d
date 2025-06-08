@@ -15,22 +15,23 @@ import core.memory : GC;
  */
 class BKTree
 {
-    private:
-    
+private:
+
     // ノード構造体
     static struct Node
     {
         string word; /// 単語
         size_t id; /// 単語ID
         Node*[size_t] children; /// 距離ごとの子ノード
-        
+
         /**
          * ノードの文字列表現を取得する
          */
         string toString() const
         {
             import std.format : format;
-            return format("Node(id: %d, word: \"%s\", children: %d)", 
+
+            return format("Node(id: %d, word: \"%s\", children: %d)",
                 id, word, children.length);
         }
     }
@@ -46,8 +47,8 @@ class BKTree
     size_t maxDepth; /// 統計情報：最大深度
     size_t totalInsertions; /// 統計情報：総挿入回数
 
-    public:
-    
+public:
+
     /**
      * BK-Treeコンストラクタ
      *
@@ -202,11 +203,11 @@ class BKTree
                     // 新しい子ノードを作成
                     current.children[dist] = new Node(word, id);
                     nodeCount++;
-                    
+
                     // 最大深度を更新
                     if (currentDepth + 1 > maxDepth)
                         maxDepth = currentDepth + 1;
-                    
+
                     return;
                 }
                 current = *childPtr;
@@ -244,7 +245,7 @@ class BKTree
     {
         size_t id; /// 単語ID
         size_t dist; /// 検索語との距離
-        
+
         /**
          * 結果の比較用（距離、IDの順でソート）
          */
@@ -256,13 +257,14 @@ class BKTree
                 return id < other.id ? -1 : 1;
             return 0;
         }
-        
+
         /**
          * 文字列表現を取得する
          */
         string toString() const
         {
             import std.format : format;
+
             return format("Result(id: %d, distance: %d)", id, dist);
         }
     }
@@ -431,7 +433,7 @@ class BKTree
     {
         if (nodeCount <= 1)
             return 0.0;
-        
+
         size_t totalChildren = getTotalChildrenCount(root);
         return cast(double) totalChildren / (nodeCount - 1); // リーフノードを除く
     }
@@ -449,7 +451,7 @@ class BKTree
         return nodeCount * nodeSize;
     }
 
-    private:
+private:
 
     /**
      * 指定したノード以下の総子ノード数を再帰的にカウントする
@@ -478,7 +480,7 @@ struct BKTreeStatistics
     size_t totalInsertions; /// 総挿入回数
     double averageBranchingFactor; /// 平均分岐数
     size_t estimatedMemoryUsage; /// 推定メモリ使用量（バイト）
-    
+
     /**
      * 統計情報を表示する
      */
@@ -492,6 +494,4 @@ struct BKTreeStatistics
         writefln("推定メモリ使用量: %.2f MB", estimatedMemoryUsage / (1024.0 * 1024.0));
         writeln("====================");
     }
-} 
-
- 
+}

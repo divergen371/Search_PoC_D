@@ -485,11 +485,11 @@ class SearchEngine
     Object[] getAvailableEngines()
     {
         return [
-            cast(Object)exactSearch,
-            cast(Object)prefixSearch,
-            cast(Object)suffixSearch,
-            cast(Object)substringSearch,
-            cast(Object)similaritySearch
+            cast(Object) exactSearch,
+            cast(Object) prefixSearch,
+            cast(Object) suffixSearch,
+            cast(Object) substringSearch,
+            cast(Object) similaritySearch
         ];
     }
 }

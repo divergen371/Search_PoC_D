@@ -327,10 +327,10 @@ T[] rangeSearch(T)(T[] arr, T min, T max)
 {
     size_t startIdx = lowerBound(arr, min);
     size_t endIdx = upperBound(arr, max);
-    
+
     if (startIdx >= arr.length || endIdx <= startIdx)
         return [];
-    
+
     return arr[startIdx .. endIdx];
 }
 
@@ -381,14 +381,12 @@ double jaccardSimilarity(T)(T[] set1, T[] set2)
 
     // 交集合のサイズを計算
     auto intersection = intersectSorted(uniqueSet1, uniqueSet2);
-    
+
     // 和集合のサイズを計算
     auto union_ = unionSorted(uniqueSet1, uniqueSet2);
 
     if (union_.length == 0)
         return 0.0;
 
-    return cast(double)intersection.length / union_.length;
-} 
-
- 
+    return cast(double) intersection.length / union_.length;
+}

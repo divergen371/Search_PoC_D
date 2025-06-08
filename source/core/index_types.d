@@ -206,7 +206,7 @@ struct GramIndexType
     {
         return contains(id);
     }
-    
+
     /**
      * 統計情報を取得する
      * 
@@ -231,14 +231,14 @@ struct IndexStatistics
     size_t totalCapacity; /// 総容量
     size_t usedEntries; /// 使用済みエントリ数
     double utilizationRate; /// 使用率（パーセント）
-    
+
     /**
      * 統計情報を表示する
      */
     void display() const
     {
         import std.stdio : writefln;
-        
+
         writefln("=== インデックス統計 ===");
         writefln("総容量: %d", totalCapacity);
         writefln("使用済み: %d", usedEntries);
@@ -255,7 +255,7 @@ struct IndexStatistics
 struct HashIDSet
 {
     private bool[size_t] idMap;
-    
+
     /**
      * IDをセットに追加する
      */
@@ -263,7 +263,7 @@ struct HashIDSet
     {
         idMap[id] = true;
     }
-    
+
     /**
      * IDをセットから削除する
      */
@@ -271,7 +271,7 @@ struct HashIDSet
     {
         idMap.remove(id);
     }
-    
+
     /**
      * 指定したIDがセットに含まれているか確認する
      */
@@ -279,7 +279,7 @@ struct HashIDSet
     {
         return (id in idMap) !is null;
     }
-    
+
     /**
      * セットに含まれるすべてのIDを配列として取得する
      */
@@ -287,7 +287,7 @@ struct HashIDSet
     {
         return idMap.keys;
     }
-    
+
     /**
      * セットに含まれるIDの数を取得する
      */
@@ -295,7 +295,7 @@ struct HashIDSet
     {
         return idMap.length;
     }
-    
+
     /**
      * セットからすべてのIDを削除する
      */
@@ -303,6 +303,4 @@ struct HashIDSet
     {
         idMap.clear();
     }
-} 
-
- 
+}
