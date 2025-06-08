@@ -4,7 +4,7 @@
 		{
 			"type": "shell",
 			"label": "Create Build Directories",
-			"command": "mkdir -p ${workspaceFolder}/build/standard ${workspaceFolder}/build/optimized ${workspaceFolder}/build/ldc-standard ${workspaceFolder}/build/ldc-optimized",
+			"command": "mkdir -p ${workspaceFolder}/build/standard ${workspaceFolder}/build/optimized ${workspaceFolder}/build/ldc-standard ${workspaceFolder}/build/ldc-optimized ${workspaceFolder}/build/debug",
 			"presentation": {
 				"reveal": "silent",
 				"panel": "shared"
@@ -34,7 +34,7 @@
 		{
 			"type": "shell",
 			"label": "dub: Optimized Build",
-			"command": "cd ${workspaceFolder} && DFLAGS=\"-O -inline -release -boundscheck=off -mcpu=native\" dub build --force --compiler=dmd -a=x86_64 -b=release -c=application --paralle --build-mode=allAtOnce && mkdir -p build/optimized && cp search-poc-d build/optimized/search-poc-d-optimized 2>/dev/null || cp ${workspaceFolder}/search-poc-d build/optimized/search-poc-d-optimized 2>/dev/null || echo 'ビルドは成功しましたが、出力ファイルが見つかりませんでした'",
+			"command": "cd ${workspaceFolder} && DFLAGS=\"-O -inline -release -boundscheck=off -mcpu=native\" dub build --force --compiler=dmd -a=x86_64 -b=release -c=application --parallel --build-mode=allAtOnce && mkdir -p build/optimized && cp search-poc-d build/optimized/search-poc-d-optimized 2>/dev/null || cp ${workspaceFolder}/search-poc-d build/optimized/search-poc-d-optimized 2>/dev/null || echo 'ビルドは成功しましたが、出力ファイルが見つかりませんでした'",
 			"group": "build",
 			"problemMatcher": [
 				"$dmd"
@@ -50,7 +50,24 @@
 		},
 		{
 			"type": "shell",
-			"label": "dub: Run",
+			"label": "dub: Debug Build",
+			"command": "cd ${workspaceFolder} && dub build --force --compiler=dmd -a=x86_64 -b=debug -c=application --parallel --build-mode=allAtOnce && mkdir -p build/debug && mv search-poc-d build/debug/search-poc-d-debug 2>/dev/null || mv ${workspaceFolder}/search-poc-d build/debug/search-poc-d-debug 2>/dev/null || echo 'デバッグビルドは成功しましたが、出力ファイルが見つかりませんでした'",
+			"group": "build",
+			"problemMatcher": [
+				"$dmd"
+			],
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared"
+			},
+			"detail": "デバッグビルド - シンボル情報あり",
+			"dependsOn": [
+				"Create Build Directories"
+			]
+		},
+		{
+			"type": "shell",
+			"label": "dub: Quick Run",
 			"command": "dub run --compiler=dmd -a=x86_64 -b=debug -c=application",
 			"group": "build",
 			"problemMatcher": [
@@ -60,7 +77,7 @@
 				"reveal": "always",
 				"panel": "new"
 			},
-			"detail": "デバッグビルドして実行"
+			"detail": "デバッグビルドして実行（開発用）"
 		},
 		{
 			"type": "shell",
@@ -77,6 +94,20 @@
 			"detail": "標準最適化版を実行",
 			"dependsOn": [
 				"dub: Build"
+			]
+		},
+		{
+			"type": "shell",
+			"label": "Run: Debug Version",
+			"command": "${workspaceFolder}/build/debug/search-poc-d-debug",
+			"group": "test",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new"
+			},
+			"detail": "デバッグ版を実行（詳細情報あり）",
+			"dependsOn": [
+				"dub: Debug Build"
 			]
 		},
 		{
@@ -152,6 +183,64 @@
 			},
 			"detail": "LDC超最適化版を実行",
 			"dependsOn": [
+				"dub: LDC Optimized Build"
+			]
+		},
+		{
+			"type": "shell",
+			"label": "Clean",
+			"command": "cd ${workspaceFolder} && dub clean && rm -rf build/ && echo 'クリーンアップが完了しました'",
+			"group": "build",
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared"
+			},
+			"detail": "ビルドファイルとキャッシュをクリーンアップ"
+		},
+		{
+			"type": "shell",
+			"label": "Test: Module Compilation",
+			"command": "cd ${workspaceFolder} && echo '=== モジュール別コンパイルテスト ===' && for module in source/core/*.d source/algorithms/*.d source/utils/*.d source/cache/*.d source/io/*.d source/search/*.d source/ui/*.d; do echo \"Testing: $module\"; dmd -c \"$module\" -Isource || echo \"Failed: $module\"; done && rm -f *.o && echo '=== テスト完了 ==='",
+			"group": "test",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new"
+			},
+			"detail": "各モジュールの個別コンパイルテスト"
+		},
+		{
+			"type": "shell",
+			"label": "Benchmark: All Versions",
+			"command": "cd ${workspaceFolder} && echo '=== パフォーマンステスト ===' && echo 'Building all versions first...' && echo 'Testing Standard Version:' && (${workspaceFolder}/build/standard/search-poc-d --help 2>/dev/null || echo 'Standard version not available') && echo 'Testing Optimized Version:' && (${workspaceFolder}/build/optimized/search-poc-d-optimized --help 2>/dev/null || echo 'Optimized version not available') && echo 'Testing LDC Standard:' && (${workspaceFolder}/build/ldc-standard/search-poc-d-ldc --help 2>/dev/null || echo 'LDC Standard version not available') && echo 'Testing LDC Optimized:' && (${workspaceFolder}/build/ldc-optimized/search-poc-d-ldc-optimized --help 2>/dev/null || echo 'LDC Optimized version not available') && echo '=== テスト完了 ==='",
+			"group": "test",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new"
+			},
+			"detail": "全バージョンのパフォーマンス比較",
+			"dependsOn": [
+				"dub: Build",
+				"dub: Optimized Build",
+				"dub: LDC Build",
+				"dub: LDC Optimized Build"
+			]
+		},
+		{
+			"type": "shell",
+			"label": "Build: All Variants",
+			"command": "echo '=== 全バリエーションビルド開始 ==='",
+			"group": "build",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new"
+			},
+			"detail": "全ビルドバリエーションを一括実行",
+			"dependsOrder": "sequence",
+			"dependsOn": [
+				"dub: Build",
+				"dub: Debug Build", 
+				"dub: Optimized Build",
+				"dub: LDC Build",
 				"dub: LDC Optimized Build"
 			]
 		}

@@ -3,7 +3,8 @@
 	"configurations": [
 		{
 			"name": "application",
-			"targetType": "executable"
+			"targetType": "executable",
+			"excludedSourceFiles": ["source/language_table.d"]
 		},
 		{
 			"name": "test",
