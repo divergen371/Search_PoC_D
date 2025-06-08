@@ -67,7 +67,7 @@ class DataManager
         lengthIndex.clear();
         
         // BK-Treeは新しく作成
-        bkTree = new BKTree(&damerauDistanceLimited, 3);
+        bkTree = new BKTree(&damerauDistanceLimited, 10);
 
         // 辞書への追加（これはスレッドセーフでないので単一スレッドで）
         foreach (entry; entries)

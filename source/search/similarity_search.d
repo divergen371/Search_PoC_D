@@ -77,8 +77,13 @@ class SimilaritySearchEngine : ISearchEngine
             }
         }
 
+        // デバッグ情報を表示
+        writefln("類似検索: 単語='%s', 最大距離=%d", searchWord, maxDistance);
+
         // BK-Treeを使用して類似検索
         auto results = bkTree.search(searchWord, maxDistance, false);
+        
+        writefln("BK-Tree検索結果: %d件", results.length);
 
         // 結果をSimilarityResultに変換
         foreach (r; results)

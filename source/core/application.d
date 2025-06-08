@@ -210,7 +210,7 @@ class LanguageTableApplication
     {
         import algorithms.distance : damerauDistanceLimited;
         
-        bkTree = new BKTree(&damerauDistanceLimited, 3);
+        bkTree = new BKTree(&damerauDistanceLimited, 10);
         nextID = 0;
         
         writeln("空のデータベースを初期化しました");

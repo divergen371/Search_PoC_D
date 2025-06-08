@@ -271,8 +271,11 @@ class CommandInterface
             size_t maxDist = simMatch[3].empty ? 2 : to!size_t(simMatch[3]);
             writefln("類似検索結果（最大距離: %d）:", maxDist);
             
+            // 距離情報を常に明示的に含むクエリ文字列を作成
+            string queryWithDistance = query ~ "," ~ to!string(maxDist);
+            
             sw.start();
-            auto results = searchEngine.searchSimilar(query);
+            auto results = searchEngine.searchSimilar(queryWithDistance);
             sw.stop();
             
             resultDisplay.displaySearchResult(results);
@@ -287,8 +290,11 @@ class CommandInterface
             size_t maxDist = simExtMatch[3].empty ? 2 : to!size_t(simExtMatch[3]);
             writefln("拡張類似検索結果（最大距離: %d）:", maxDist);
             
+            // 距離情報を常に明示的に含むクエリ文字列を作成
+            string queryWithDistance = query ~ "," ~ to!string(maxDist);
+            
             sw.start();
-            auto results = searchEngine.searchSimilarExtended(query);
+            auto results = searchEngine.searchSimilarExtended(queryWithDistance);
             sw.stop();
             
             resultDisplay.displaySearchResult(results);
